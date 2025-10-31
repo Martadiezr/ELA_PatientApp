@@ -1,6 +1,6 @@
 package pojos;
 
-import java.util.Date;
+import java.sql.Date;
 import java.util.Objects;
 
 public class Patient {
@@ -8,7 +8,7 @@ public class Patient {
     private String name;
     private String surname;
     private String dni;
-    private Date dateOfBirth;
+    private java.sql.Date dateOfBirth;
     private String sex;
     private Integer phone;
     private String email;
@@ -53,7 +53,7 @@ public class Patient {
         this.dni = dni;
     }
 
-    public Date getDateOfBirth() {
+    public java.sql.Date getDateOfBirth() {
         return dateOfBirth;
     }
 
@@ -119,4 +119,6 @@ public class Patient {
                 ", insurance=" + insurance +
                 '}';
     }
+
+
 }
