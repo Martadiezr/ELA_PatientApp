@@ -23,7 +23,7 @@ public class ConnectionManager {
         this.docMan = new JDBCDoctorManager(this);
         this.pMan = new JDBCPatientManager(this);
 
-        //this.createTables();
+        this.createTables();
         //this.insertSymptom();
 
     }
@@ -112,6 +112,54 @@ public class ConnectionManager {
                 sqlE.printStackTrace();
             }
         }
+    }
+
+    private void insertSymptoms(){
+        try {
+            Statement insertSymptom1 = conn.createStatement();
+            String symptom1 = "INSERT INTO symptom VALUES(1, 'muscle fatigue')";
+            insertSymptom1.executeUpdate(symptom1);
+            insertSymptom1.close();
+
+            Statement insertSymptom2 = conn.createStatement();
+            String symptom2 = "INSERT INTO symptom VALUES(1, 'Difficulty moving limbs' )";
+            insertSymptom1.executeUpdate(symptom1);
+            insertSymptom1.close();
+
+            Statement insertSymptom3 = conn.createStatement();
+            String symptom3 = "INSERT INTO symptom VALUES(1, 'Difficulty speaking')";
+            insertSymptom1.executeUpdate(symptom2);
+            insertSymptom1.close();
+
+            Statement insertSymptom4 = conn.createStatement();
+            String symptom4 = "INSERT INTO symptom VALUES(1, 'Difficulty swallowing')";
+            insertSymptom1.executeUpdate(symptom2);
+            insertSymptom1.close();
+
+            Statement insertSymptom5 = conn.createStatement();
+            String symptom5 = "INSERT INTO symptom VALUES(1, 'Muscle spasms or cramps')";
+            insertSymptom1.executeUpdate(symptom2);
+            insertSymptom1.close();
+
+            Statement insertSymptom6 = conn.createStatement();
+            String symptom6 = "INSERT INTO symptom VALUES(1, 'Shortness of breath')";
+            insertSymptom1.executeUpdate(symptom2);
+            insertSymptom1.close();
+
+            Statement insertSymptom7 = conn.createStatement();
+            String symptom7 = "INSERT INTO symptom VALUES(1, 'Weak neck muscles')";
+            insertSymptom1.executeUpdate(symptom2);
+            insertSymptom1.close();
+
+        }catch (SQLException sqlE) {
+            if (sqlE.getMessage().contains("UNIQUE constraint failed")) {
+                System.out.println("No symptom to insert the needs; already there");
+            } else {
+                System.out.println("Error in query");
+                sqlE.printStackTrace();
+            }
+        }
+
     }
 
 }
