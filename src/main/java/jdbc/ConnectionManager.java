@@ -31,7 +31,7 @@ public class ConnectionManager {
     private void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
-            conn = DriverManager.getConnection("jdbc:sqlite:/Users/marti/Desktop/CARRERA/4º CARRERA/1º CUATRI/telemedicina/ELA_telemedicine.db");
+            conn = DriverManager.getConnection("jdbc:sqlite:./db/ELA_telemedicine.db");
             conn.createStatement().execute("PRAGMA foreign_keys=ON");
         } catch (ClassNotFoundException cnfE) {
             System.out.println("Databases prosthetic not loaded");
