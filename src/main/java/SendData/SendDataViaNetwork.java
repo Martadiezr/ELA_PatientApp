@@ -1,0 +1,107 @@
+package SendData;
+
+import pojos.*;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.List;
+
+public class SendDataViaNetwork {
+    private DataOutputStream dataOutputStream;
+    public SendDataViaNetwork(Socket socket) {
+        try {
+            this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        } catch (IOException ex) {
+            System.err.println("Error al inicializar el flujo de salida: " + ex.getMessage());
+            Logger.getLogger(SendDataViaNetwork.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void sendStrings(String message) throws IOException{
+        dataOutputStream.writeUTF(message);
+        dataOutputStream.flush();
+    }
+
+    public void sendInt(int message) throws IOException{
+        dataOutputStream.writeInt(message);
+        dataOutputStream.flush();
+    }
+
+    public void sendUser(User user) throws IOException {
+        // Enviar el ID del usuario
+        dataOutputStream.writeInt(user.getId());
+
+        // Enviar el nombre de usuario
+        dataOutputStream.writeUTF(user.getUsername());
+
+        // Enviar la contraseña encriptada
+        dataOutputStream.writeUTF(user.getPasswordEncripted());
+
+        // Enviar el rol del usuario (convirtiéndolo a String)
+        dataOutputStream.writeUTF(user.getRole().toString());
+    }
+
+    public void sendPatient(Patient patient) throws IOException{
+        dataOutputStream.writeInt(patient.getId());
+        dataOutputStream.writeUTF(patient.getName());
+        dataOutputStream.writeUTF(patient.getSurname());
+        dataOutputStream.writeUTF(String.valueOf(patient.getInsurance()));
+        dataOutputStream.flush();
+    }
+
+    public void sendDoctor(Doctor doctor) throws IOException {
+        dataOutputStream.writeInt(doctor.getId());
+        dataOutputStream.writeUTF(doctor.getName());
+        dataOutputStream.writeUTF(doctor.getSurname());
+        dataOutputStream.writeUTF(doctor.getDNI());
+        dataOutputStream.writeUTF(String.valueOf(doctor.getBirthDate()));
+        dataOutputStream.writeUTF(doctor.getSex());
+        dataOutputStream.writeUTF(doctor.getEmail());
+        dataOutputStream.flush();
+
+    }
+
+    public void sendMedicalInformation(MedicalInformation medicalInformation) throws IOException {
+        // Enviar el ID de la información médica
+        dataOutputStream.writeInt(medicalInformation.getId());
+
+        // Enviar la fecha del informe
+        dataOutputStream.writeUTF(String.valueOf(medicalInformation.getReportDate()));
+
+        // Enviar la lista de síntomas
+        List<Symptom> symptoms = medicalInformation.getSymptoms();
+        dataOutputStream.writeInt(symptoms.size());  // Enviar la cantidad de síntomas
+        for (Symptom symptom : symptoms) {
+            dataOutputStream.writeInt(symptom.getId());  // Enviar el ID del síntoma
+        }
+
+        // Enviar la lista de medicamentos
+        List<String> medication = medicalInformation.getMedication();
+        dataOutputStream.writeInt(medication.size());  // Enviar la cantidad de medicamentos
+        for (String med : medication) {
+            dataOutputStream.writeUTF(med);  // Enviar cada medicamento
+        }
+
+        // Enviar el feedback
+        dataOutputStream.writeUTF(medicalInformation.getFeedback());
+
+        // Asegurarse de que los datos se escriban completamente
+        dataOutputStream.flush();
+    }
+
+    public void releaseResources() {
+        try {
+            if (dataOutputStream != null) {
+                dataOutputStream.close();
+            }
+        } catch (IOException ex) {
+            System.err.println("Error with resources: " + ex.getMessage());
+            Logger.getLogger(SendDataViaNetwork.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+
+}
