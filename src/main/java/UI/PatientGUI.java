@@ -16,18 +16,28 @@ public class PatientGUI {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         // Crear menú de opciones
+        JButton loginButton = new JButton("Log in ");
+        JButton registerInfoButton = new JButton("Register");
         JButton registerButton = new JButton("Registrar Información Médica");
         JButton recordSignalButton = new JButton("Grabar Señal");
         JButton sendReportButton = new JButton("Enviar Reporte");
         JButton feedbackButton = new JButton("Ver Feedback y Recetas");
 
         // Agregar los botones al panel
+        panel.add(loginButton);
+        panel.add(registerInfoButton);
         panel.add(registerButton);
         panel.add(recordSignalButton);
         panel.add(sendReportButton);
         panel.add(feedbackButton);
 
         // Acciones de los botones
+        registerInfoButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {showRegisterInfoForm();}
+        });
+        loginButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {showLogInForm();}
+        });
         registerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 showRegistrationForm();
@@ -58,6 +68,85 @@ public class PatientGUI {
     }
 
     // Métodos para mostrar cada pantalla (opciones del menú)
+    private static void showRegisterInfoForm() {
+        JFrame frame = new JFrame("Register");
+        frame.setSize(500, 400);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(5, 2));
+
+        panel.add(new JLabel("Name:"));
+        JTextField nameField = new JTextField();
+        panel.add(nameField);
+
+        panel.add(new JLabel("Surname:"));
+        JTextField surnameField = new JTextField();
+        panel.add(surnameField);
+
+        panel.add(new JLabel("Dni:"));
+        JTextField dniField = new JTextField();
+        panel.add(dniField);
+
+        panel.add(new JLabel("Email:"));
+        JTextField emailField = new JTextField();
+        panel.add(emailField);
+
+        panel.add(new JLabel("Sex:"));
+        JTextField genderField = new JTextField();
+        panel.add(genderField);
+
+        panel.add(new JLabel("Birth date:"));
+        JTextField dobField = new JTextField();
+        panel.add(dobField);
+
+        panel.add(new JLabel("Phone"));
+        JTextField phoneField = new JTextField();
+        panel.add(phoneField);
+
+        panel.add(new JLabel("Insurance number:"));
+        JTextField insuranceField = new JTextField();
+        panel.add(insuranceField);
+
+
+        JButton sendButton = new JButton("Send");
+        panel.add(sendButton);
+        sendButton.addActionListener(e -> {
+            System.out.println("Register Patient: " + nameField.getText());
+        });
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+    private static void showLogInForm() {
+        JFrame frame = new JFrame("Log in:");
+        frame.setSize(500, 400);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(3, 2));
+        panel.add(new JLabel("Email:"));
+        JTextField emailField = new JTextField();
+        panel.add(emailField);
+
+        // ns si es asi
+        panel.add(new JLabel("Password:"));
+        JPasswordField passwordField = new JPasswordField();
+        panel.add(passwordField);
+
+        JButton loginButton = new JButton("Entrar");
+        panel.add(loginButton);
+
+        loginButton.addActionListener(e -> {
+            System.out.println("Doctor log in: " + emailField.getText());
+        });
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+
+    }
+
+
 
     private static void showRegistrationForm() {
         JFrame frame = new JFrame("Registrar Información Médica");
