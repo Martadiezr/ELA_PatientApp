@@ -47,10 +47,10 @@ public class SendDataViaNetwork {
     }
 
     public void sendPatient(Patient patient) throws IOException{
-        dataOutputStream.writeInt(patient.getId());
-        dataOutputStream.writeUTF(patient.getName());
-        dataOutputStream.writeUTF(patient.getSurname());
-        dataOutputStream.writeUTF(String.valueOf(patient.getInsurance()));
+        dataOutputStream.writeInt(patient.getId());        // Enviar ID
+        dataOutputStream.writeUTF(patient.getName());      // Enviar nombre
+        dataOutputStream.writeUTF(patient.getSurname());   // Enviar apellido
+        dataOutputStream.writeUTF(String.valueOf(patient.getInsurance()));  // Enviar seguro como String
         dataOutputStream.flush();
     }
 
@@ -67,32 +67,28 @@ public class SendDataViaNetwork {
     }
 
     public void sendMedicalInformation(MedicalInformation medicalInformation) throws IOException {
-        // Enviar el ID de la información médica
         dataOutputStream.writeInt(medicalInformation.getId());
-
-        // Enviar la fecha del informe
         dataOutputStream.writeUTF(String.valueOf(medicalInformation.getReportDate()));
 
         // Enviar la lista de síntomas
         List<Symptom> symptoms = medicalInformation.getSymptoms();
-        dataOutputStream.writeInt(symptoms.size());  // Enviar la cantidad de síntomas
+        dataOutputStream.writeInt(symptoms.size());
         for (Symptom symptom : symptoms) {
-            dataOutputStream.writeInt(symptom.getId());  // Enviar el ID del síntoma
+            dataOutputStream.writeInt(symptom.getId());
         }
 
         // Enviar la lista de medicamentos
         List<String> medication = medicalInformation.getMedication();
-        dataOutputStream.writeInt(medication.size());  // Enviar la cantidad de medicamentos
+        dataOutputStream.writeInt(medication.size());
         for (String med : medication) {
-            dataOutputStream.writeUTF(med);  // Enviar cada medicamento
+            dataOutputStream.writeUTF(med);
         }
 
-        // Enviar el feedback
+        // Enviar la retroalimentación
         dataOutputStream.writeUTF(medicalInformation.getFeedback());
-
-        // Asegurarse de que los datos se escriban completamente
         dataOutputStream.flush();
     }
+
 
     public void releaseResources() {
         try {

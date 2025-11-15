@@ -28,20 +28,6 @@ public class ReceiveDataViaNetwork {
         return dataInputStream.readUTF();
     }
 
-    public Doctor receiveDoctor() throws IOException{
-        Doctor doctor = null;
-        int id = dataInputStream.readInt();
-        String name = dataInputStream.readUTF();
-        String surname = dataInputStream.readUTF();
-        String dni = dataInputStream.readUTF();
-        Date birthDate = Date.valueOf(dataInputStream.readUTF());
-        String sex = dataInputStream.readUTF();
-        String email = dataInputStream.readUTF();
-        doctor = new Doctor(id, name, surname, dni, birthDate, sex, email);
-
-        return doctor;
-    }
-
     public Patient recievePatient(){
         Patient patient = null;
         try {
@@ -58,6 +44,22 @@ public class ReceiveDataViaNetwork {
         }
         return patient;
     }
+
+    public Doctor receiveDoctor() throws IOException{
+        Doctor doctor = null;
+        int id = dataInputStream.readInt();
+        String name = dataInputStream.readUTF();
+        String surname = dataInputStream.readUTF();
+        String dni = dataInputStream.readUTF();
+        Date birthDate = Date.valueOf(dataInputStream.readUTF());
+        String sex = dataInputStream.readUTF();
+        String email = dataInputStream.readUTF();
+        doctor = new Doctor(id, name, surname, dni, birthDate, sex, email);
+
+        return doctor;
+    }
+
+
 
     public MedicalInformation receiveMedicalInformation() {
         MedicalInformation medicalInformation = null;
@@ -99,14 +101,20 @@ public class ReceiveDataViaNetwork {
     //Obtiene el sintoma desde el servidor, se solicita la informacion.
     public Symptom getSymptomFromServer(int symptomId) {
         try {
-            // Aquí podrías enviar el ID del síntoma al servidor y esperar la respuesta
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(symptomId);  // Enviando solicitud de síntoma por ID
+            // Enviar el ID como entero binario, igual que lo lee el servidor
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            out.writeInt(symptomId);
+            out.flush();
 
-            // Esperando la respuesta (el objeto Symptom) del servidor
-            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            return (Symptom) objectInputStream.readObject();  // Recibiendo el objeto Symptom
-        } catch (IOException | ClassNotFoundException e) {
+            // Recibir el objeto Symptom desde el servidor. Mejor usar DataInputStream para este propósito.
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+
+            int symptomIdFromServer = in.readInt();
+            String symptomName = in.readUTF(); // Suponiendo que el nombre es un String
+            // Aquí deberías recuperar el resto de los atributos del Symptom. Ajusta según tus necesidades
+            Symptom symptom = new Symptom(symptomIdFromServer, symptomName);
+            return symptom;
+        } catch (IOException e) {
             System.err.println("Error fetching symptom from server: " + e.getMessage());
             e.printStackTrace();
         }

@@ -22,6 +22,12 @@ public class Symptom {
         this.medicalInformations = new ArrayList<MedicalInformation>();
     }
 
+    public Symptom(int symptomIdFromServer, String symptomName) {
+        this.id = symptomIdFromServer;
+        this.description = symptomName;
+
+    }
+
     public Integer getId() {
         return id;
     }
