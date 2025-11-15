@@ -28,6 +28,10 @@ public class Symptom {
 
     }
 
+    public Symptom() {
+
+    }
+
     public Integer getId() {
         return id;
     }

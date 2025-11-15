@@ -1,5 +1,6 @@
 package SendData;
 
+import BITalino.Frame;
 import UI.Utilities;
 import pojos.*;
 
@@ -88,7 +89,17 @@ public class SendDataViaNetwork {
         dataOutputStream.writeUTF(medicalInformation.getFeedback());
         dataOutputStream.flush();
     }
-
+    // Método para enviar la señal grabada al servidor
+    public void sendSignal(Frame[] frames) throws IOException {
+        for (Frame frame : frames) {
+            // Enviar cada valor de los canales analógicos (puedes elegir cómo procesar los datos)
+            for (int i = 0; i < frame.analog.length; i++) {
+                // Aquí, enviamos los valores de cada canal analógico. Puedes convertirlo si es necesario
+                dataOutputStream.writeInt(frame.analog[i]);  // Enviar valor de cada canal analógico
+            }
+        }
+        dataOutputStream.flush();  // Asegurarse de que los datos se envíen
+    }
 
     public void releaseResources() {
         try {
