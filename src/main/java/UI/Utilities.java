@@ -7,7 +7,6 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import pojos.*;
 
 public class Utilities {
     public static int readInteger(String question) {
@@ -114,12 +113,12 @@ public class Utilities {
      *
      * @return A {@code Patient} object containing registered data or {@code null}.
      */
-    public static Patient registerPatientData()
+    public static PatientUI registerPatientData()
     {
-        Patient patient = null;
+        PatientUI patientUI = null;
 
 
-        return patient;
+        return patientUI;
     }
 
 }

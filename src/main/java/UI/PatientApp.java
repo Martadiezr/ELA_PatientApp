@@ -6,13 +6,10 @@ import java.util.Scanner;
 
 import SendData.SendDataViaNetwork;
 import SendData.ReceiveDataViaNetwork;
+import pojos.*;
 
 public class PatientApp {
 
-    private static Socket socket;
-    private static SendDataViaNetwork sendDataViaNetwork;
-    private static ReceiveDataViaNetwork receiveDataViaNetwork;
-    private static Patient patient;
 
     public static void main(String[] args) {
         boolean running = true;
@@ -22,16 +19,16 @@ public class PatientApp {
         while (running) {
             String ipAddress = Utilities.readString("Enter the IP address of the server to connect to:\n");
             try {
-                socket = new Socket(ipAddress, 8000);
-                sendDataViaNetwork = new SendDataViaNetwork(socket);
-                receiveDataViaNetwork = new ReceiveDataViaNetwork(socket);
+                Socket socket = new Socket(ipAddress, 8000);
+                SendDataViaNetwork sendDataViaNetwork = new SendDataViaNetwork(socket);
+                ReceiveDataViaNetwork receiveDataViaNetwork = new ReceiveDataViaNetwork(socket);
                 sendDataViaNetwork.sendInt(1);  // Se asume que se está enviando un código para verificar la conexión
                 String message = receiveDataViaNetwork.receiveString();
                 System.out.println(message);
 
                 if (message.equals("PATIENT")) {
                     // Proceder con las opciones del paciente
-                    showPatientMenu();
+                    showPatientMenu(socket, sendDataViaNetwork, receiveDataViaNetwork);
                 } else {
                     System.out.println("Server response invalid. Try again.");
                 }
@@ -43,12 +40,12 @@ public class PatientApp {
     }
 
     // Menú principal del paciente
-    public static void showPatientMenu() {
+    public static void showPatientMenu(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
         boolean running = true;
         Scanner scanner = new Scanner(System.in);
 
         // Crear un único objeto Patient que será usado en todos los casos
-        UI.Patient patient = new UI.Patient();
+        PatientUI patientUI = new PatientUI();
 
         while (running) {
             System.out.println("1- Log in");
@@ -59,14 +56,14 @@ public class PatientApp {
             switch (option) {
                 case 1:
                     try {
-                        patient.logIn();  // Llama al método logIn() en la clase Paciente
+                        patientUI.logIn(socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama al método logIn() en la clase Paciente
                     } catch (IOException e) {
                         System.out.println("Error during login: " + e.getMessage());
                     }
                     break;
                 case 2:
                     try {
-                        patient.register();  // Llama al método register() en la clase Paciente
+                        patientUI.register(socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama al método register() en la clase Paciente
                     } catch (IOException e) {
                         System.out.println("Error during registration: " + e.getMessage());
                     }
@@ -82,9 +79,10 @@ public class PatientApp {
     }
 
     // Método para mostrar el menú de opciones del paciente después de un inicio de sesión exitoso
-    public static void menuPaciente() throws IOException {
+    public static void menuPaciente(Patient patientInServer, SendDataViaNetwork sendDataViaNetwork,ReceiveDataViaNetwork receiveDataViaNetwork, Socket socket) throws IOException {
         boolean running = true;
         Scanner scanner = new Scanner(System.in);
+        PatientUI patient = new PatientUI();
 
         while (running) {
             System.out.println("1- Insert medical information");
@@ -112,6 +110,7 @@ public class PatientApp {
                     break;
                 default:
                     System.out.println("Invalid option, try again.");
+                    break;
             }
         }
     }

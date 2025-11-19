@@ -28,7 +28,7 @@ public class ReceiveDataViaNetwork {
         return dataInputStream.readUTF();
     }
 
-    public Patient recievePatient(){
+    public Patient receivePatient(){
         Patient patient = null;
         try {
             int id = dataInputStream.readInt();
