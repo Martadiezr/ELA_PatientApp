@@ -1,16 +1,15 @@
 package pojos;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Role {
     private Integer id;
     private String name;
     private List<User> users;
 
-    public Role(Integer id, String name, List<User> users) {
-        this.id = id;
+    public Role(String name) {
         this.name = name;
-        this.users = users;
     }
     public Integer getId() {
         return id;
@@ -31,4 +30,24 @@ public class Role {
         this.users = users;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Role role)) return false;
+        return Objects.equals(id, role.id) && Objects.equals(name, role.name) && Objects.equals(users, role.users);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, users);
+    }
+
+    @Override
+    public String toString() {
+        return "Role{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", users=" + users +
+                '}';
+    }
 }

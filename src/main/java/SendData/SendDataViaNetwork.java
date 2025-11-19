@@ -1,13 +1,11 @@
 package SendData;
 
 import BITalino.Frame;
-import UI.Utilities;
 import pojos.*;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.time.LocalDate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.List;
@@ -33,18 +31,11 @@ public class SendDataViaNetwork {
         dataOutputStream.flush();
     }
 
-    public void sendUser(User user) throws IOException {
-        // Enviar el ID del usuario
-        dataOutputStream.writeInt(user.getId());
-
-        // Enviar el nombre de usuario
-        dataOutputStream.writeUTF(user.getUsername());
-
-        // Enviar la contraseña encriptada
-        dataOutputStream.writeUTF(user.getPasswordEncripted());
-
-        // Enviar el rol del usuario (convirtiéndolo a String)
-        dataOutputStream.writeUTF(user.getRole().toString());
+    public void sendUser(User user) throws IOException{
+        dataOutputStream.writeUTF(user.getEmail());
+        dataOutputStream.writeUTF(String.valueOf(user.getRole()));
+        byte[] password = user.getPasswordEncripted();
+        dataOutputStream.writeUTF(new String(password));
     }
 
     public void sendPatient(Patient patient) throws IOException{
