@@ -39,10 +39,15 @@ public class SendDataViaNetwork {
     }
 
     public void sendPatient(Patient patient) throws IOException{
-        dataOutputStream.writeInt(patient.getId());        // Enviar ID
-        dataOutputStream.writeUTF(patient.getName());      // Enviar nombre
-        dataOutputStream.writeUTF(patient.getSurname());   // Enviar apellido
-        dataOutputStream.writeUTF(String.valueOf(patient.getInsurance()));  // Enviar seguro como String
+        //dataOutputStream.writeInt(patient.getId());
+        dataOutputStream.writeUTF(patient.getName());
+        dataOutputStream.writeUTF(patient.getSurname());
+        dataOutputStream.writeUTF(patient.getDni());
+        dataOutputStream.writeUTF(String.valueOf(patient.getDateOfBirth()));
+        dataOutputStream.writeUTF(patient.getSex());
+        dataOutputStream.writeUTF(String.valueOf(patient.getPhone()));
+        dataOutputStream.writeUTF(patient.getEmail());
+        dataOutputStream.writeUTF(String.valueOf(patient.getInsurance()));
         dataOutputStream.flush();
     }
 

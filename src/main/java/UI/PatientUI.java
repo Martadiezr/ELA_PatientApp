@@ -28,42 +28,39 @@ public class PatientUI {
             Patient patient = new Patient();
             Role role = new Role("Patient");
 
-            System.out.println("Enter your name: ");
-            patient.setName(scanner.nextLine());
+            String name = Utilities.readString("Enter your name: ");
+            patient.setName(name);
 
-            System.out.println("Enter your surname: ");
-            patient.setSurname(scanner.nextLine());
+            String surname = Utilities.readString("Enter your surname: ");
+            patient.setSurname(surname);
 
-            System.out.println("Enter your DNI: ");
-            patient.setDni(scanner.nextLine());
+            String dni = Utilities.readString("Enter your dni: ");
+            patient.setDni(dni);
 
-            System.out.println("Enter your date of birth (YYYY-MM-DD): ");
-            String dateOfBirthStr = scanner.nextLine();
-            Date dateOfBirth = Date.valueOf(dateOfBirthStr);
+            String dob = Utilities.readString("Enter your date of birth (YYYY-MM-DD): ");
+            Date dateOfBirth = Date.valueOf(dob);
             patient.setDateOfBirth(dateOfBirth);
 
-            System.out.println("Enter your sex (M/F): ");
-            patient.setSex(scanner.nextLine());
+            String sex = Utilities.readString("Enter your sex (M/F): ");
+            patient.setSex(sex);
 
-            System.out.println("Enter your phone number: ");
-            patient.setPhone(scanner.nextInt());
+            int phone = Utilities.readInteger("Enter your phone: ");
+            patient.setPhone(phone);
 
-            scanner.nextLine(); // Consume newline character
-
-            System.out.println("Enter your email: ");
-            String email = scanner.nextLine();
+            String email = Utilities.readString("Enter your email: ");
             patient.setEmail(email);
 
-            System.out.println("Enter your insurance number: ");
-            patient.setInsurance(scanner.nextInt());
+            int insurance = Utilities.readInteger("Enter your insurance: ");
+            patient.setInsurance(insurance);
 
-            System.out.println("Set your password: ");
-            String password = scanner.nextLine();
+            String password = Utilities.readString("Enter your password: ");
             byte[] passwordBytes = password.getBytes(); // Convertir la contraseña a bytes
 
             if (passwordBytes != null) {
                 sendDataViaNetwork.sendStrings("OK");
                 User user = new User(email, passwordBytes, role);
+                System.out.println(patient);
+                System.out.println(user);
                 sendDataViaNetwork.sendPatient(patient);
                 sendDataViaNetwork.sendUser(user);
 
