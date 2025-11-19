@@ -14,11 +14,27 @@ public class Patient {
     private String email;
     private Integer insurance;
 
-    public Patient(Integer id, String surname, String name, Integer insurance) {
-        this.surname = surname;
-        this.name = name;
+    public Patient(Integer id, String name, String surname, Integer insurance) {
         this.id = id;
+        this.name = name;
+        this.surname = surname;
         this.insurance = insurance;
+    }
+
+    public Patient(Integer id, String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance) {
+        this.id = id;
+        this.name = name;
+        this.surname = surname;
+        this.dni = dni;
+        this.dateOfBirth = dateOfBirth;
+        this.sex = sex;
+        this.phone = phone;
+        this.email = email;
+        this.insurance = insurance;
+    }
+
+    public Patient() {
+
     }
 
     public Integer getId() {

@@ -7,12 +7,12 @@ public class Doctor {
     private int id;
     private String name;
     private String surname;
-    private int DNI;
+    private String DNI;
     private Date birthDate;
     private String sex;
     public String email;
 
-    public Doctor(int id, String name, String surname, int DNI, Date birthDate, String sex, String email) {
+    public Doctor(int id, String name, String surname, String DNI, Date birthDate, String sex, String email) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -46,11 +46,11 @@ public class Doctor {
         this.surname = surname;
     }
 
-    public int getDNI() {
+    public String getDNI() {
         return DNI;
     }
 
-    public void setDNI(int DNI) {
+    public void setDNI(String DNI) {
         this.DNI = DNI;
     }
 
