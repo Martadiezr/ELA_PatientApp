@@ -22,7 +22,7 @@ public class PatientApp {
         while (running) {
             String ipAddress = Utilities.readString("Enter the IP address of the server to connect to:\n");
             try {
-                socket = new Socket(ipAddress, 8000);
+                socket = new Socket(ipAddress, 12345);
                 sendDataViaNetwork = new SendDataViaNetwork(socket);
                 receiveDataViaNetwork = new ReceiveDataViaNetwork(socket);
                 sendDataViaNetwork.sendInt(1);  // Se asume que se está enviando un código para verificar la conexión
