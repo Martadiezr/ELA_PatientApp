@@ -34,8 +34,13 @@ public class ReceiveDataViaNetwork {
             int id = dataInputStream.readInt();
             String name = dataInputStream.readUTF();
             String surname = dataInputStream.readUTF();
+            String dni = dataInputStream.readUTF();
+            Date birthDate = Date.valueOf(dataInputStream.readUTF());
+            String sex = dataInputStream.readUTF();
+            Integer phone = dataInputStream.readInt();
+            String email = dataInputStream.readUTF();
             Integer insurance = Integer.valueOf(dataInputStream.readUTF());
-            patient = new Patient(id, name, surname, insurance);
+            patient = new Patient(id, name, surname, dni, birthDate, sex, phone, email, insurance);
         } catch (EOFException ex) {
             System.out.println("Data not correctly read.");
         } catch (IOException ex) {
