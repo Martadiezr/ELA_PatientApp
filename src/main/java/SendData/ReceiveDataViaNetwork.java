@@ -28,19 +28,22 @@ public class ReceiveDataViaNetwork {
         return dataInputStream.readUTF();
     }
 
-    public Patient receivePatient(){
+    public Patient recievePatient(){
         Patient patient = null;
         try {
+            System.out.println("Receiving patient data...");
             int id = dataInputStream.readInt();
             String name = dataInputStream.readUTF();
             String surname = dataInputStream.readUTF();
             String dni = dataInputStream.readUTF();
             Date birthDate = Date.valueOf(dataInputStream.readUTF());
             String sex = dataInputStream.readUTF();
-            Integer phone = dataInputStream.readInt();
+            int phone = dataInputStream.readInt();
             String email = dataInputStream.readUTF();
-            Integer insurance = Integer.valueOf(dataInputStream.readUTF());
-            patient = new Patient(id, name, surname, dni, birthDate, sex, phone, email, insurance);
+            int insurance = dataInputStream.readInt();
+            patient = new Patient(id,name, surname, dni, birthDate, sex, phone, email, insurance);
+            System.out.println(patient);
+            return patient;
         } catch (EOFException ex) {
             System.out.println("Data not correctly read.");
         } catch (IOException ex) {

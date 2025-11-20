@@ -105,10 +105,13 @@ public class PatientUI {
 
                 if(response.equals("SUCCESS")) {
                     try{
-                    Patient patient = receiveDataViaNetwork.receivePatient();
+                    Patient patient = receiveDataViaNetwork.recievePatient();
+                    System.out.println(patient.toString());
                         if (patient != null) {
                             System.out.println("Log in successful");
                             PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                        } else {
+                            System.out.println("Patient not found");
                         }
                     } catch (IOException e) {
                         System.out.println("Log in problem");
