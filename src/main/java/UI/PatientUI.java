@@ -14,74 +14,120 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class Patient {
-    Socket socket = null;
-    public void register() throws IOException {
+public class PatientUI {
+    Socket socket2 = null;
+
+    public void register(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         // Crear un objeto Patient y obtener los datos del paciente
-        Scanner scanner = new Scanner(System.in);
-        pojos.Patient patient = new pojos.Patient();
+        try {
+            sendDataViaNetwork.sendInt(2); // Indicar al servidor que se va a registrar un paciente
 
-        System.out.println("Enter your name: ");
-        patient.setName(scanner.nextLine());
+            Patient patient = new Patient();
+            Role role = new Role("Patient");
 
-        System.out.println("Enter your surname: ");
-        patient.setSurname(scanner.nextLine());
+            String name = Utilities.readString("Enter your name: ");
+            patient.setName(name);
 
-        System.out.println("Enter your DNI: ");
-        patient.setDni(scanner.nextLine());
+            String surname = Utilities.readString("Enter your surname: ");
+            patient.setSurname(surname);
 
-        System.out.println("Enter your date of birth (YYYY-MM-DD): ");
-        String dateOfBirthStr = scanner.nextLine();
-        Date dateOfBirth = Date.valueOf(dateOfBirthStr);
-        patient.setDateOfBirth(dateOfBirth);
+            String dni = Utilities.readString("Enter your dni: ");
+            patient.setDni(dni);
 
-        System.out.println("Enter your sex (M/F): ");
-        patient.setSex(scanner.nextLine());
+            String dob = Utilities.readString("Enter your date of birth (YYYY-MM-DD): ");
+            Date dateOfBirth = Date.valueOf(dob);
+            patient.setDateOfBirth(dateOfBirth);
 
-        System.out.println("Enter your phone number: ");
-        patient.setPhone(scanner.nextInt());
+            String sex = Utilities.readString("Enter your sex (M/F): ");
+            patient.setSex(sex);
 
-        scanner.nextLine(); // Consume newline character
+            int phone = Utilities.readInteger("Enter your phone: ");
+            patient.setPhone(phone);
 
-        System.out.println("Enter your email: ");
-        patient.setEmail(scanner.nextLine());
+            String email = Utilities.readString("Enter your email: ");
+            patient.setEmail(email);
 
-        System.out.println("Enter your insurance number: ");
-        patient.setInsurance(scanner.nextInt());
+            int insurance = Utilities.readInteger("Enter your insurance: ");
+            patient.setInsurance(insurance);
 
-        // Ahora, usar la clase SendDataViaNetwork para enviar los datos del paciente al servidor
-        SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
-        sendData.sendPatient(patient);  // Enviar los datos del paciente al servidor
+            String password = Utilities.readString("Enter your password: ");
+            byte[] passwordBytes = password.getBytes(); // Convertir la contraseña a bytes
 
-        System.out.println("Registration successful!");
+            if (passwordBytes != null) {
+                sendDataViaNetwork.sendStrings("OK");
+                User user = new User(email, passwordBytes, role);
+                System.out.println(patient);
+                System.out.println(user);
+                sendDataViaNetwork.sendPatient(patient);
+                sendDataViaNetwork.sendUser(user);
+
+                if(receiveDataViaNetwork.receiveString().equals("SUCCESS")){
+                    System.out.println("Patient registered successfully.");
+                    PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                } else {
+                    System.out.println("Registration failed. Please try again.");
+                    return; // Salir del metodo si el registro falla
+                }
+            } else {
+                sendDataViaNetwork.sendStrings("ERROR");
+            }
+
+        }catch(IOException e){
+            System.out.println("Error in connection");
+            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
+            System.exit(0);
+        }
     }
 
 
-    public void logIn() throws IOException {
-        // Crear un objeto Scanner para obtener las credenciales
-        Scanner scanner = new Scanner(System.in);
+    public void logIn(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        try {
+            sendDataViaNetwork.sendInt(1);
+            System.out.println(receiveDataViaNetwork.receiveString());
 
-        System.out.println("Enter your username: ");
-        String username = scanner.nextLine();
+            String username = Utilities.readString("Enter your username: ");
 
-        System.out.println("Enter your password: ");
-        String password = scanner.nextLine();
+            String password = Utilities.readString("Enter your password: ");
 
-        // Usar la clase SendDataViaNetwork para enviar las credenciales al servidor
-        SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
-        sendData.sendStrings(username);  // Enviar nombre de usuario
-        sendData.sendStrings(password);  // Enviar contraseña
+            byte[] passwordBytes = password.getBytes();
 
-        // Ahora, recibir la respuesta del servidor sobre el login
-        ReceiveDataViaNetwork receiveData = new ReceiveDataViaNetwork(socket);
-        int loginResponse = receiveData.receiveInt();  // Recibir respuesta del servidor (1 para éxito, 0 para error)
+            Role role = new Role("Patient");
 
-        if (loginResponse == 1) {
-            System.out.println("Login successful!");
-            PatientApp.menuPaciente();  // Llamar al menú de opciones del paciente
-        } else {
-            System.out.println("Invalid credentials, please try again.");
+            if(passwordBytes != null) {
+                sendDataViaNetwork.sendStrings("OK");
+                User user = new User(username, passwordBytes, role);
+                sendDataViaNetwork.sendUser(user);
+                String response = receiveDataViaNetwork.receiveString();
+                System.out.println(response);
+
+                if(response.equals("SUCCESS")) {
+                    try{
+                    Patient patient = receiveDataViaNetwork.receivePatient();
+                        if (patient != null) {
+                            System.out.println("Log in successful");
+                            PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                        }
+                    } catch (IOException e) {
+                        System.out.println("Log in problem");
+                    }
+                } else if (response.equals("ERROR")) {
+                    System.out.println("User or password is incorrect");
+                } else {
+                    System.out.println("Login failed. Please check your credentials.");
+                }
+
+
+            }else {
+                sendDataViaNetwork.sendStrings("ERROR");
+            }
+
+        }catch(IOException e){
+            System.out.println("Error in connection");
+            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
+            System.exit(0);
         }
     }
 
@@ -112,7 +158,7 @@ public class Patient {
         MedicalInformation medicalInfo = new MedicalInformation(null, symptoms, reportDate, medication, null);  // Feedback es null al principio
 
         // Usar la clase SendDataViaNetwork para enviar la información médica al servidor
-        SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
+        SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
         sendData.sendMedicalInformation(medicalInfo);  // Enviar la información médica al servidor
 
         System.out.println("Medical information successfully sent!");
@@ -120,7 +166,7 @@ public class Patient {
 
     public void seeDoctorFeedback() throws IOException {
         // Usar la clase ReceiveDataViaNetwork para recibir la retroalimentación del doctor desde el servidor
-        ReceiveDataViaNetwork receiveData = new ReceiveDataViaNetwork(socket);
+        ReceiveDataViaNetwork receiveData = new ReceiveDataViaNetwork(socket2);
         String feedback = receiveData.receiveString();  // Recibir el feedback como una cadena
 
         // Mostrar el feedback recibido
@@ -160,7 +206,7 @@ public class Patient {
         // Por ejemplo, puedes extraer los valores de los canales analógicos y enviarlos al servidor
         try {
             // Crear un objeto de SendDataViaNetwork para enviar los datos al servidor
-            SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
+            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
 
             // Convertir los datos del Frame a un formato que el servidor pueda manejar (por ejemplo, un array de int o float)
             // Aquí estamos enviando solo los valores de los canales analógicos
@@ -191,7 +237,7 @@ public class Patient {
             Frame[] frames = bitalinoDevice.read(100);  // Aquí se obtiene el array de frames (señal grabada)
 
             // Enviar la señal grabada al servidor
-            SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
+            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
             sendData.sendSignal(frames);  // Pasar los frames grabados al método sendSignal
 
             // Detener el dispositivo BITalino después de grabar la señal
@@ -203,6 +249,19 @@ public class Patient {
         }
     }
 
+    private static void releaseResources(Socket socket,SendDataViaNetwork sendDataViaNetwork,ReceiveDataViaNetwork receiveDataViaNetwork){
+        if(sendDataViaNetwork != null && receiveDataViaNetwork != null) {
+            sendDataViaNetwork.releaseResources();
+            receiveDataViaNetwork.releaseResources();
+        }
+        try {
+            if(socket != null){
+                socket.close();
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(PatientApp.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
 
 }
