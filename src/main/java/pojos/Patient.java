@@ -32,6 +32,17 @@ public class Patient {
         this.email = email;
         this.insurance = insurance;
     }
+    public Patient(String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance) {
+
+        this.name = name;
+        this.surname = surname;
+        this.dni = dni;
+        this.dateOfBirth = dateOfBirth;
+        this.sex = sex;
+        this.phone = phone;
+        this.email = email;
+        this.insurance = insurance;
+    }
 
     public Patient() {
 
