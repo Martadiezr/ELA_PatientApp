@@ -24,7 +24,7 @@ public class PatientUI {
         // Crear un objeto Patient y obtener los datos del paciente
         try {
             sendDataViaNetwork.sendInt(2); // Indicar al servidor que se va a registrar un paciente
-            Scanner scanner = new Scanner(System.in);
+
             Patient patient = new Patient();
             Role role = new Role("Patient");
 
@@ -64,16 +64,17 @@ public class PatientUI {
                 sendDataViaNetwork.sendPatient(patient);
                 sendDataViaNetwork.sendUser(user);
 
-                PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                if(receiveDataViaNetwork.receiveString().equals("SUCCESS")){
+                    System.out.println("Patient registered successfully.");
+                    PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                } else {
+                    System.out.println("Registration failed. Please try again.");
+                    return; // Salir del metodo si el registro falla
+                }
             } else {
                 sendDataViaNetwork.sendStrings("ERROR");
             }
 
-            // Ahora, usar la clase SendDataViaNetwork para enviar los datos del paciente al servidor
-            SendDataViaNetwork sendData = new SendDataViaNetwork(socket);
-            sendData.sendPatient(patient);  // Enviar los datos del paciente al servidor
-
-            System.out.println("Registration successful!");
         }catch(IOException e){
             System.out.println("Error in connection");
             releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
@@ -87,14 +88,10 @@ public class PatientUI {
             sendDataViaNetwork.sendInt(1);
             System.out.println(receiveDataViaNetwork.receiveString());
 
-            // Crear un objeto Scanner para obtener las credenciales
-            Scanner scanner = new Scanner(System.in);
+            String username = Utilities.readString("Enter your username: ");
 
-            System.out.println("Enter your username: ");
-            String username = scanner.nextLine();
+            String password = Utilities.readString("Enter your password: ");
 
-            System.out.println("Enter your password: ");
-            String password = scanner.nextLine();
             byte[] passwordBytes = password.getBytes();
 
             Role role = new Role("Patient");
