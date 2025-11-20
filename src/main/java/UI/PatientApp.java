@@ -94,7 +94,7 @@ public class PatientApp {
 
             switch (option) {
                 case 1:
-                    patient.insertMedicalInformation();  // Llama a insertMedicalInformation() en la clase Paciente
+                    //patient.insertMedicalInformation(socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a insertMedicalInformation() en la clase Paciente
                     break;
                 case 2:
                     patient.recordSignal();  // Llama a recordSignal() en la clase Paciente
@@ -114,4 +114,5 @@ public class PatientApp {
             }
         }
     }
+
 }

@@ -150,4 +150,22 @@ public class ReceiveDataViaNetwork {
             ex.printStackTrace();
         }
     }
+
+    public List<Symptom> receiveSymptoms() {
+        List<Symptom> symptoms = null;
+        try{
+            for(Symptom symptomName : symptoms ) {
+                int id = dataInputStream.readInt();
+                String description = dataInputStream.readUTF();
+                symptomName = new Symptom(id, description);
+            }
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return symptoms;
+    }
+
+
 }

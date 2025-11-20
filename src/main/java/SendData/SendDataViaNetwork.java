@@ -63,28 +63,7 @@ public class SendDataViaNetwork {
 
     }
 
-    public void sendMedicalInformation(MedicalInformation medicalInformation) throws IOException {
-        dataOutputStream.writeInt(medicalInformation.getId());
-        dataOutputStream.writeUTF(String.valueOf(medicalInformation.getReportDate()));
 
-        // Enviar la lista de síntomas
-        List<Symptom> symptoms = medicalInformation.getSymptoms();
-        dataOutputStream.writeInt(symptoms.size());
-        for (Symptom symptom : symptoms) {
-            dataOutputStream.writeInt(symptom.getId());
-        }
-
-        // Enviar la lista de medicamentos
-        List<String> medication = medicalInformation.getMedication();
-        dataOutputStream.writeInt(medication.size());
-        for (String med : medication) {
-            dataOutputStream.writeUTF(med);
-        }
-
-        // Enviar la retroalimentación
-        dataOutputStream.writeUTF(medicalInformation.getFeedback());
-        dataOutputStream.flush();
-    }
     // Método para enviar la señal grabada al servidor
     public void sendSignal(Frame[] frames) throws IOException {
         for (Frame frame : frames) {
@@ -107,6 +86,26 @@ public class SendDataViaNetwork {
             Logger.getLogger(SendDataViaNetwork.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    public void sendMedicalInformation(MedicalInformation medicalInformation) throws IOException {
+
+        dataOutputStream.writeUTF(String.valueOf(medicalInformation.getReportDate()));
+        // Enviar la lista de síntomas
+        List<Symptom> symptoms = medicalInformation.getSymptoms();
+        dataOutputStream.writeInt(symptoms.size());
+        for (Symptom symptom : symptoms) {
+            dataOutputStream.writeInt(symptom.getId());
+        }
+
+        // Enviar la lista de medicamentos
+        List<String> medication = medicalInformation.getMedication();
+        dataOutputStream.writeInt(medication.size());
+        for (String med : medication) {
+            dataOutputStream.writeUTF(med);
+        }
+        dataOutputStream.flush();
+    }
+
 
 
 }

@@ -20,6 +20,11 @@ public class MedicalInformation {
         this.medication = medication;
         this.feedback = feedback;
     }
+
+    public MedicalInformation() {
+
+    }
+
     public Integer getId() {
         return id;
     }

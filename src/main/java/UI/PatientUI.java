@@ -134,38 +134,7 @@ public class PatientUI {
         }
     }
 
-    public void insertMedicalInformation() throws IOException {
-        // Crear una instancia del objeto MedicalInformation
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter the report date (YYYY-MM-DD): ");
-        String reportDateStr = scanner.nextLine();
-        java.sql.Date reportDate = java.sql.Date.valueOf(reportDateStr);
-
-        // Ingresar síntomas
-        System.out.println("Enter symptoms (comma-separated): ");
-        String symptomsInput = scanner.nextLine();
-        List<Symptom> symptoms = new ArrayList<>();
-        for (String symptomName : symptomsInput.split(",")) {
-            Symptom symptom = new Symptom();  // Crear un nuevo objeto Symptom
-            symptom.setDescription(symptomName.trim());  // Suponiendo que Symptom tiene un campo `name`
-            symptoms.add(symptom);
-        }
-
-        // Ingresar medicamentos
-        System.out.println("Enter medications (comma-separated): ");
-        String medicationInput = scanner.nextLine();
-        List<String> medication = Arrays.asList(medicationInput.split(","));
-
-        // Crear el objeto MedicalInformation con los datos proporcionados
-        MedicalInformation medicalInfo = new MedicalInformation(null, symptoms, reportDate, medication, null);  // Feedback es null al principio
-
-        // Usar la clase SendDataViaNetwork para enviar la información médica al servidor
-        SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
-        sendData.sendMedicalInformation(medicalInfo);  // Enviar la información médica al servidor
-
-        System.out.println("Medical information successfully sent!");
-    }
 
     public void seeDoctorFeedback() throws IOException {
         // Usar la clase ReceiveDataViaNetwork para recibir la retroalimentación del doctor desde el servidor
@@ -263,6 +232,43 @@ public class PatientUI {
             }
         } catch (IOException ex) {
             Logger.getLogger(PatientApp.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void insertMedicalInformation(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        try {
+            sendDataViaNetwork.sendInt(1); // Indicar al servidor que se va a registrar medical information
+            MedicalInformation medicalInformation = new MedicalInformation();
+            String dateReport = Utilities.readString("Enter date of report (YYYY-MM-DD): ");
+            Date report = Date.valueOf(dateReport);
+            medicalInformation.setReportDate(report);
+
+            // Ingresar síntomas
+            sendDataViaNetwork.sendStrings("send Symptoms");
+            //List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
+           // System.out.println(symptoms);
+            String symptomsInput = Utilities.readString("Choose your symptoms for your report (comma-separated): ");
+
+            // Ingresar medicamentos
+            String medications = Utilities.readString("Enter medications (comma-separated): ");
+            List<String> medicationsList = new ArrayList<>();
+            for (String medicationName : medications.split(",")) {
+                medicationsList.add(medicationName.trim());
+                medicalInformation.setMedication(medicationsList);
+            }
+
+            // Crear el objeto MedicalInformation con los datos proporcionados
+            //MedicalInformation medicalInfo = new MedicalInformation(null, symptoms, reportDate, medication, null);  // Feedback es null al principio
+
+            // Usar la clase SendDataViaNetwork para enviar la información médica al servidor
+            //SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
+            //                                                                                                                                                                                                                                                    sendData.sendMedicalInformation(medicalInfo);  // Enviar la información médica al servidor
+
+            System.out.println("Medical information successfully sent!");
+        } catch (Exception e) {
+            System.out.println("Error in connection");
+            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
+            System.exit(0);
         }
     }
 
