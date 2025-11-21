@@ -10,6 +10,7 @@ import pojos.*;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -235,42 +236,67 @@ public class PatientUI {
         }
     }
 
-    public void insertMedicalInformation(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+    public void insertMedicalInformation(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         try {
             sendDataViaNetwork.sendInt(1); // Indicar al servidor que se va a registrar medical information
+            //opcion 1 en menuPaciente
+
             MedicalInformation medicalInformation = new MedicalInformation();
-            String dateReport = Utilities.readString("Enter date of report (YYYY-MM-DD): ");
-            Date report = Date.valueOf(dateReport);
-            medicalInformation.setReportDate(report);
 
+            Date dateReport = Date.valueOf(java.time.LocalDate.now());
+            medicalInformation.setReportDate(dateReport);
             // Ingresar síntomas
-            sendDataViaNetwork.sendStrings("send Symptoms");
-            //List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
-           // System.out.println(symptoms);
-            String symptomsInput = Utilities.readString("Choose your symptoms for your report (comma-separated): ");
+            sendDataViaNetwork.sendStrings("SEND SYMPTOMS");
+            String message = receiveDataViaNetwork.receiveString();
+            if(message.equals("OK")){
+                List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
+                List<Symptom> symptomsOfPatient = new ArrayList<>();
+                System.out.println("Please select your symptoms");
+                System.out.println(symptoms);
 
-            // Ingresar medicamentos
-            String medications = Utilities.readString("Enter medications (comma-separated): ");
-            List<String> medicationsList = new ArrayList<>();
-            for (String medicationName : medications.split(",")) {
-                medicationsList.add(medicationName.trim());
-                medicalInformation.setMedication(medicationsList);
+                System.out.println("Insert the number of your symptoms! Enter 0 to finish");
+                int selection = -1;
+                while(selection != 0){
+                    selection = Utilities.readInteger("");
+                    symptomsOfPatient.add(symptoms.get(selection));
+                }
+
+                System.out.println("Insert the medication you have been using recently, separated by comas, if yur are not medicated, enter NOTHING");
+                List<String> medicaments = new ArrayList<>();
+                System.out.println("To finish, please enter OK");
+                String medicament = null;
+                while(!medicament.equals("OK")){
+                    medicament = Utilities.readString("");
+                    medicaments.add(medicament);
+                }
+
+
+                System.out.println("Sending now the medical information!");
+                //Now we send the final Medical Information
+                medicalInformation.setSymptoms(symptomsOfPatient);
+                medicalInformation.setMedication(medicaments);
+
+                sendDataViaNetwork.sendMedicalInformation(medicalInformation);
+                String succesfull = receiveDataViaNetwork.receiveString();
+
+                if(succesfull.equals("RECEIVED MEDICAL INFORMATION")){
+                    System.out.println("Medical information successfully sent!");
+                    PatientApp.menuPaciente(patient,sendDataViaNetwork,receiveDataViaNetwork,socket);
+                }else{
+                    System.out.println("ERROR");
+                }
+
+
+            }else{
+                System.out.println("Could not fetch the symptoms from the server");
             }
-
-            // Crear el objeto MedicalInformation con los datos proporcionados
-            //MedicalInformation medicalInfo = new MedicalInformation(null, symptoms, reportDate, medication, null);  // Feedback es null al principio
-
-            // Usar la clase SendDataViaNetwork para enviar la información médica al servidor
-            //SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
-            //                                                                                                                                                                                                                                                    sendData.sendMedicalInformation(medicalInfo);  // Enviar la información médica al servidor
-
-            System.out.println("Medical information successfully sent!");
         } catch (Exception e) {
             System.out.println("Error in connection");
             releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
             System.exit(0);
         }
     }
+
 
 
 }

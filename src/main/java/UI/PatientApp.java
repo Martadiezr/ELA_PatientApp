@@ -19,7 +19,7 @@ public class PatientApp {
         while (running) {
             String ipAddress = Utilities.readString("Enter the IP address of the server to connect to:\n");
             try {
-                Socket socket = new Socket(ipAddress, 8000);
+                Socket socket = new Socket("localhost", 8000);
                 SendDataViaNetwork sendDataViaNetwork = new SendDataViaNetwork(socket);
                 ReceiveDataViaNetwork receiveDataViaNetwork = new ReceiveDataViaNetwork(socket);
                 sendDataViaNetwork.sendInt(1);  // Se asume que se está enviando un código para verificar la conexión
@@ -94,7 +94,7 @@ public class PatientApp {
 
             switch (option) {
                 case 1:
-                    //patient.insertMedicalInformation(socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a insertMedicalInformation() en la clase Paciente
+                    patient.insertMedicalInformation(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a insertMedicalInformation() en la clase Paciente
                     break;
                 case 2:
                     patient.recordSignal();  // Llama a recordSignal() en la clase Paciente
