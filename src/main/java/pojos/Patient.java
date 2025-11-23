@@ -1,6 +1,7 @@
 package pojos;
 
 import java.sql.Date;
+import java.util.List;
 import java.util.Objects;
 
 public class Patient {
@@ -13,12 +14,46 @@ public class Patient {
     private Integer phone;
     private String email;
     private Integer insurance;
+    private Integer doctor_id;
+    private List<MedicalInformation> medicalInformation;
 
-    public Patient(Integer id, String name, String surname, Integer insurance) {
+    public Patient() {
+    }
+
+    public Patient(String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance, List<MedicalInformation> medicalInformation) {
+        this.name = name;
+        this.surname = surname;
+        this.dni = dni;
+        this.dateOfBirth = dateOfBirth;
+        this.sex = sex;
+        this.phone = phone;
+        this.email = email;
+        this.insurance = insurance;
+        this.medicalInformation = medicalInformation;
+    }
+
+    public Patient(String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance) {
+        this.name = name;
+        this.surname = surname;
+        this.dni = dni;
+        this.dateOfBirth = dateOfBirth;
+        this.sex = sex;
+        this.phone = phone;
+        this.email = email;
+        this.insurance = insurance;
+    }
+
+    public Patient(int id, String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance, List<MedicalInformation> medicalInformation) {
         this.id = id;
         this.name = name;
         this.surname = surname;
+        this.dni = dni;
+        this.dateOfBirth = dateOfBirth;
+        this.sex = sex;
+        this.phone = phone;
+        this.email = email;
         this.insurance = insurance;
+        this.medicalInformation = medicalInformation;
     }
 
     public Patient(Integer id, String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance) {
@@ -32,20 +67,12 @@ public class Patient {
         this.email = email;
         this.insurance = insurance;
     }
-    public Patient(String name, String surname, String dni, Date dateOfBirth, String sex, Integer phone, String email, Integer insurance) {
 
-        this.name = name;
+    public Patient(Integer id, String surname, String name, Integer insurance) {
         this.surname = surname;
-        this.dni = dni;
-        this.dateOfBirth = dateOfBirth;
-        this.sex = sex;
-        this.phone = phone;
-        this.email = email;
+        this.name = name;
+        this.id = id;
         this.insurance = insurance;
-    }
-
-    public Patient() {
-
     }
 
     public Integer getId() {
@@ -80,11 +107,11 @@ public class Patient {
         this.dni = dni;
     }
 
-    public java.sql.Date getDateOfBirth() {
+    public Date getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(Date dateOfBirth) {
+    public void setDateOfBirth(java.sql.Date dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 
@@ -120,6 +147,14 @@ public class Patient {
         this.insurance = insurance;
     }
 
+    public List<MedicalInformation> getMedicalInformation() {
+        return medicalInformation;
+    }
+
+    public void setMedicalInformation(List<MedicalInformation> medicalInformation) {
+        this.medicalInformation = medicalInformation;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -144,6 +179,7 @@ public class Patient {
                 ", phone=" + phone +
                 ", email='" + email + '\'' +
                 ", insurance=" + insurance +
+                ", medicalInformation=" + medicalInformation +
                 '}';
     }
 
