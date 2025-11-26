@@ -69,43 +69,6 @@ public class ReceiveDataViaNetwork {
 
 
 
-    public MedicalInformation receiveMedicalInformation() {
-        MedicalInformation medicalInformation = null;
-        try {
-            int id = dataInputStream.readInt();  // Recibe el ID de la información médica
-            Date reportDate = Date.valueOf(dataInputStream.readUTF());  // Recibe la fecha del informe
-
-            int symptomsCount = dataInputStream.readInt();  // Número de síntomas
-            List<Symptom> symptoms = new ArrayList<>();
-            for (int i = 0; i < symptomsCount; i++) {
-                int symptomId = dataInputStream.readInt();  // ID del síntoma
-                // Solicitar el síntoma al servidor
-                //Symptom symptom = getSymptomFromServer(symptomId);  // Obtener el síntoma desde el servidor
-//                if (symptom != null) {
-//                    symptoms.add(symptom);
-//                }
-            }
-
-            // Recibe la lista de medicamentos
-            int medicationCount = dataInputStream.readInt();
-            List<String> medication = new ArrayList<>();
-            for (int i = 0; i < medicationCount; i++) {
-                medication.add(dataInputStream.readUTF());  // Agrega cada medicamento a la lista
-            }
-
-            // Recibe el feedback
-            String feedback = dataInputStream.readUTF();  // Retroalimentación
-
-            // Crea la instancia de MedicalInformation con todos los datos
-            medicalInformation = new MedicalInformation(id, symptoms, reportDate, medication, feedback);
-
-        } catch (IOException ex) {
-            System.err.println("Error receiving medical information: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-        return medicalInformation;
-    }
-
     //Obtiene los sintomas desde el servidor, se solicita la informacion.
     public List<Symptom> receiveSymptoms() throws IOException {
         // 1. Leer cuántos síntomas vienen
@@ -124,6 +87,43 @@ public class ReceiveDataViaNetwork {
         }
 
         return symptoms;
+    }
+
+    //Obtiene los sintomas desde el servidor, se solicita la informacion.
+    public List<String> receiveMedications() throws IOException {
+        // 1. Leer cuántos síntomas vienen
+        int size = dataInputStream.readInt();
+
+        List<String> medications = new ArrayList<String>();
+
+        // 2. Leer cada síntoma en el mismo orden en el que se envió
+        for (int i = 0; i < size; i++) {
+            String medication = dataInputStream.readUTF();
+            medications.add(medication);
+        }
+
+        return medications;
+    }
+
+    public MedicalInformation receiveMedicalInformation() {
+        MedicalInformation medicalInformation = null;
+        try {
+            Date reportDate = Date.valueOf(dataInputStream.readUTF());  // Recibe la fecha del informe
+
+            List<Symptom> symptoms = receiveSymptoms();
+
+            List<String> medication = receiveMedications();
+
+            String feedback = dataInputStream.readUTF();
+
+            // Crea la instancia de MedicalInformation con todos los datos
+            medicalInformation = new MedicalInformation(symptoms, reportDate, medication, feedback);
+
+        } catch (IOException ex) {
+            System.err.println("Error receiving medical information: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        return medicalInformation;
     }
 
     public int receiveInt() {

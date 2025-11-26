@@ -103,7 +103,7 @@ public class PatientApp {
                     patient.sendSignal();  // Llama a sendSignal() en la clase Paciente
                     break;
                 case 4:
-                    patient.seeDoctorFeedback();  // Llama a seeDoctorFeedback() en la clase Paciente
+                    patient.seeDoctorFeedback(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a seeDoctorFeedback() en la clase Paciente
                     break;
                 case 0:
                     running = false;

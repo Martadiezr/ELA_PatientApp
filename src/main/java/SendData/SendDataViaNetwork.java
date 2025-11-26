@@ -33,7 +33,7 @@ public class SendDataViaNetwork {
 
     public void sendUser(User user) throws IOException{
         dataOutputStream.writeUTF(user.getEmail());
-        dataOutputStream.writeUTF(String.valueOf(user.getRole()));
+        dataOutputStream.writeUTF(String.valueOf(user.getRole().getName()));
         byte[] password = user.getPasswordEncripted();
         dataOutputStream.writeUTF(new String(password));
     }
@@ -91,21 +91,40 @@ public class SendDataViaNetwork {
 
         dataOutputStream.writeUTF(String.valueOf(medicalInformation.getReportDate()));
         // Enviar la lista de síntomas
-        List<Symptom> symptoms = medicalInformation.getSymptoms();
-        dataOutputStream.writeInt(symptoms.size());
-        for (Symptom symptom : symptoms) {
-            dataOutputStream.writeInt(symptom.getId());
-        }
+        sendSymptoms(medicalInformation.getSymptoms());
 
         // Enviar la lista de medicamentos
-        List<String> medication = medicalInformation.getMedication();
-        dataOutputStream.writeInt(medication.size());
-        for (String med : medication) {
-            dataOutputStream.writeUTF(med);
-        }
+        sendMedications(medicalInformation.getMedication());
+
         dataOutputStream.flush();
     }
 
+    public void sendSymptoms(List<Symptom> symptoms) throws IOException {
+        // 1. Enviar cuántos síntomas vienen
+        dataOutputStream.writeInt(symptoms.size());
+
+        // 2. Enviar cada síntoma (ajusta los campos a lo que tenga tu clase Symptom)
+        for (Symptom symptom : symptoms) {
+            dataOutputStream.writeInt(symptom.getId());
+            dataOutputStream.writeUTF(symptom.getDescription());
+            // si tu Symptom tiene más cosas, las vas escribiendo aquí en el mismo orden
+        }
+
+        dataOutputStream.flush();
+    }
+
+    public void sendMedications(List<String> medications) throws IOException {
+        // 1. Enviar cuántos síntomas vienen
+        dataOutputStream.writeInt(medications.size());
+
+        // 2. Enviar cada síntoma (ajusta los campos a lo que tenga tu clase Symptom)
+        for (String medication : medications) {
+            dataOutputStream.writeUTF(medication);
+            // si tu Symptom tiene más cosas, las vas escribiendo aquí en el mismo orden
+        }
+
+        dataOutputStream.flush();
+    }
 
 
 }

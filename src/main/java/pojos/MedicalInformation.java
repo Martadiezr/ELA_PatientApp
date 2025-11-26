@@ -21,6 +21,13 @@ public class MedicalInformation {
         this.feedback = feedback;
     }
 
+    public MedicalInformation(List<Symptom> symptoms, Date reportDate, List<String> medication, String feedback) {
+        this.symptoms = symptoms;
+        this.reportDate = reportDate;
+        this.medication = medication;
+        this.feedback = feedback;
+    }
+
     public MedicalInformation() {
 
     }

@@ -137,15 +137,6 @@ public class PatientUI {
 
 
 
-    public void seeDoctorFeedback() throws IOException {
-        // Usar la clase ReceiveDataViaNetwork para recibir la retroalimentación del doctor desde el servidor
-        ReceiveDataViaNetwork receiveData = new ReceiveDataViaNetwork(socket2);
-        String feedback = receiveData.receiveString();  // Recibir el feedback como una cadena
-
-        // Mostrar el feedback recibido
-        System.out.println("Doctor's feedback: " + feedback);
-    }
-
     public void sendSignal() {
         // Crear una instancia del objeto BITalino
         BITalino bitalinoDevice = new BITalino();
@@ -261,12 +252,16 @@ public class PatientUI {
                     symptomsOfPatient.add(symptoms.get(selection));
                 }
 
-                System.out.println("Insert the medication you have been using recently, separated by comas, if yur are not medicated, enter NOTHING");
+                System.out.println("Insert the medication you have been using recently, then ENTER, if yur are not medicated, enter NOTHING");
                 List<String> medicaments = new ArrayList<>();
                 System.out.println("To finish, please enter OK");
-                String medicament = null;
+                String medicament = "";
+
                 while(!medicament.equals("OK")){
                     medicament = Utilities.readString("");
+                    if(medicament.equals("OK")){
+                        break;
+                    }
                     medicaments.add(medicament);
                 }
 
@@ -291,6 +286,43 @@ public class PatientUI {
                 System.out.println("Could not fetch the symptoms from the server");
             }
         } catch (Exception e) {
+            System.out.println("Error in connection");
+            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
+            System.exit(0);
+        }
+    }
+
+    public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        try{
+            sendDataViaNetwork.sendInt(4); // Indicar al servidor que se va a registrar medical information
+
+            String feedback = null;
+
+            String message = "REQUEST FEEDBACK";
+            sendDataViaNetwork.sendStrings(message);
+
+            String response = receiveDataViaNetwork.receiveString();
+            System.out.println("response from server : "+response);
+            if(response.equals("OK")){
+                String dateString = Utilities.readString("Please write the date when you sent the medical report (YYYY-MM-DD): ");
+                sendDataViaNetwork.sendStrings(dateString);
+
+                MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
+
+                if(medicalInformation != null){
+                    sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
+                    feedback = medicalInformation.toString();
+                    System.out.println("The feedback from the doctor is:");
+                    System.out.println(feedback);
+                    PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork , socket);
+                }else{
+                    sendDataViaNetwork.sendStrings("ERROR");
+                }
+            }else{
+                System.out.println("Could not fetch the feedback from the server");
+            }
+
+        }catch (Exception e) {
             System.out.println("Error in connection");
             releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
             System.exit(0);
