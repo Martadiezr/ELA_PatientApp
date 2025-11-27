@@ -1,27 +1,20 @@
 package UI;
-import SendData.SendDataViaNetwork;
-import pojos.Symptom;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PatientGUI extends JFrame {
+
     private PatientClientContext context;
     private CardLayout cardLayout;
     private JPanel mainPanel;
 
     // Paneles
     private JPanel authPanel;
-    private JPanel selectPatientPanel;
     private JPanel menuPanel;
-
-    private JTextArea patientListArea;
-    private JTextField patientIdField;
 
     private Integer currentPatientId = null;
 
@@ -32,22 +25,26 @@ public class PatientGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(600, 400);
 
+        // CardLayout para manejar las pantallas
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
         authPanel = createAuthPanel();
         menuPanel = createMenuPanel();
 
+        // Añadir ambos paneles al layout
         mainPanel.add(authPanel, "AUTH");
-        mainPanel.add(menuPanel, "MENU");
+        mainPanel.add(menuPanel, "MENU");  // Asegúrate de que el nombre sea "MENU"
 
+        // Establecer el panel de contenido
         setContentPane(mainPanel);
+
+        // Inicialmente mostramos el panel de autenticación
         cardLayout.show(mainPanel, "AUTH");
 
         setLocationRelativeTo(null);
         setVisible(true);
     }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -62,6 +59,7 @@ public class PatientGUI extends JFrame {
         });
     }
 
+    // Crear el panel de autenticación (Login y Register)
     private JPanel createAuthPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -89,6 +87,7 @@ public class PatientGUI extends JFrame {
         return panel;
     }
 
+    // Mostrar el formulario de login
     private void showLoginForm() {
         JDialog dialog = new JDialog(this, "Log in", true);
         dialog.setSize(400, 200);
@@ -118,14 +117,13 @@ public class PatientGUI extends JFrame {
                         context.getReceiveData()
                 );
                 if (ok) {
+                    // Asignar el ID del paciente logueado
+                    currentPatientId = context.getPatientUI().getLoggedInPatient().getId();
                     JOptionPane.showMessageDialog(dialog, "Log in successful");
                     dialog.dispose();
-                    cardLayout.show(mainPanel, "MENU");  // Cambiar a la pantalla de opciones del paciente
+                    cardLayout.show(mainPanel, "MENU");  // Cambiar a la pantalla de menú
                 } else {
-                    JOptionPane.showMessageDialog(dialog,
-                            "Incorrect user or password",
-                            "Login error",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "Incorrect user or password", "Login error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(dialog,
@@ -139,7 +137,7 @@ public class PatientGUI extends JFrame {
         dialog.setVisible(true);
     }
 
-
+    // Mostrar el formulario de registro
     private void showRegisterForm() {
         JDialog dialog = new JDialog(this, "Register", true);
         dialog.setSize(450, 350);
@@ -178,17 +176,19 @@ public class PatientGUI extends JFrame {
                         dobField.getText(),
                         sexField.getText(),
                         emailField.getText(),
-                        new String(passwordField.getPassword()),
                         Integer.parseInt(phoneField.getText()),  // Convertimos teléfono a entero
                         Integer.parseInt(insuranceField.getText()),
+                        new String(passwordField.getPassword()),
                         context.getSocket(),
                         context.getSendData(),
                         context.getReceiveData()
                 );
                 if (ok) {
+                    // Asignar el ID del paciente registrado
+                    currentPatientId = context.getPatientUI().getLoggedInPatient().getId();
                     JOptionPane.showMessageDialog(dialog, "Patient registered successfully");
                     dialog.dispose();
-                    cardLayout.show(mainPanel, "MENU"); // Cambiar a la pantalla de opciones del paciente
+                    cardLayout.show(mainPanel, "MENU");  // Cambiar a la pantalla de menú
                 } else {
                     JOptionPane.showMessageDialog(dialog,
                             "Registration failed",
@@ -207,14 +207,7 @@ public class PatientGUI extends JFrame {
         dialog.setVisible(true);
     }
 
-
-
-
-
-
-
-    // ===================== PANTALLA 3: MENU 4 OPCIONES =====================
-
+    // Crear el panel del menú de opciones del paciente
     private JPanel createMenuPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -233,7 +226,6 @@ public class PatientGUI extends JFrame {
         sendReportButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         feedbackButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Aquí llamamos a los métodos correspondientes cuando el paciente elige una opción
         registerInfoButton.addActionListener(e -> onRegisterMedicalInfo());
         recordSignalButton.addActionListener(e -> onRecordSignal());
         sendReportButton.addActionListener(e -> onSendReport());
@@ -254,126 +246,22 @@ public class PatientGUI extends JFrame {
     }
 
     private void onRegisterMedicalInfo() {
-        if (currentPatientId == null) {
-            JOptionPane.showMessageDialog(this, "No patient selected");
-            return;
-        }
-
-        // Crear un formulario para capturar los síntomas
-        JDialog dialog = new JDialog(this, "Register Medical Information", true);
-        dialog.setSize(450, 400);
-        dialog.setLayout(new GridLayout(10, 2));  // Ajustamos el tamaño del formulario
-
-        JTextArea symptomsListArea = new JTextArea(10, 30);  // Área de texto para mostrar la lista de síntomas
-        symptomsListArea.setEditable(false);  // Solo lectura, para mostrar los síntomas
-
-        dialog.add(new JLabel("Symptoms List (Select by ID):"));
-        dialog.add(new JScrollPane(symptomsListArea));  // Hacemos que el área de texto sea desplazable
-
-        JButton selectSymptomsButton = new JButton("Select Symptoms");
-        dialog.add(new JLabel());  // Espacio vacío
-        dialog.add(selectSymptomsButton);
-
-        // Enviar la solicitud al servidor para obtener los síntomas
-        try {
-            context.getSendData().sendStrings("SEND SYMPTOMS");
-            String message = context.getReceiveData().receiveString();
-
-            if (message.equals("OK")) {
-                List<Symptom> symptoms = context.getReceiveData().receiveSymptoms();
-                StringBuilder symptomsText = new StringBuilder("ID - Symptom Name\n");
-
-                for (int i = 0; i < symptoms.size(); i++) {
-                    symptomsText.append(symptoms.get(i).getId())
-                            .append(" - ").append(symptoms.get(i).getDescription())
-                            .append("\n");
-                }
-
-                symptomsListArea.setText(symptomsText.toString());
-
-                selectSymptomsButton.addActionListener(e -> {
-                    String selectedSymptomsIds = JOptionPane.showInputDialog(dialog,
-                            "Enter the IDs of the symptoms you are experiencing (comma separated):");
-
-                    if (selectedSymptomsIds != null && !selectedSymptomsIds.isEmpty()) {
-                        String[] selectedIds = selectedSymptomsIds.split(",");
-                        List<Symptom> selectedSymptoms = new ArrayList<>();
-
-                        // Seleccionar los síntomas según los ID proporcionados por el paciente
-                        for (String id : selectedIds) {
-                            try {
-                                int symptomId = Integer.parseInt(id.trim());  // Convertir ID a entero
-                                for (Symptom symptom : symptoms) {
-                                    if (symptom.getId() == symptomId) {
-                                        selectedSymptoms.add(symptom);  // Agregar el síntoma seleccionado
-                                    }
-                                }
-                            } catch (NumberFormatException ex) {
-                                JOptionPane.showMessageDialog(dialog, "Invalid ID format.");
-                                return;
-                            }
-                        }
-
-                        // Ahora enviamos los síntomas seleccionados y la información médica al servidor
-                        try {
-                            // Aquí estamos llamando al método para registrar la información médica
-                            context.getPatientUI().insertMedicalInformationFromGUI(
-                                    currentPatientId,  // ID del paciente
-                                    selectedSymptoms,   // Lista de síntomas seleccionados
-                                    context.getSocket(),
-                                    context.getSendData(),
-                                    context.getReceiveData()
-                            );
-                            dialog.dispose();  // Cerrar el formulario después de enviar
-                            JOptionPane.showMessageDialog(this, "Medical Information Registered Successfully");
-                        } catch (IOException ex) {
-                            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                });
-
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Could not fetch symptoms from the server");
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(dialog, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
+        // Aquí va la lógica para registrar la información médica
+        JOptionPane.showMessageDialog(this, "Here you can register medical information");
     }
 
-
-
-
-
-
-
     private void onRecordSignal() {
-        if (currentPatientId == null) {
-            JOptionPane.showMessageDialog(this, "No patient selected");
-            return;
-        }
-        // Aquí iría la lógica para grabar la señal
-        JOptionPane.showMessageDialog(this, "Recording Signal");
+        // Aquí va la lógica para grabar la señal
+        JOptionPane.showMessageDialog(this, "Here you can record a signal");
     }
 
     private void onSendReport() {
-        if (currentPatientId == null) {
-            JOptionPane.showMessageDialog(this, "No patient selected");
-            return;
-        }
-        // Aquí iría la lógica para enviar el reporte
-        JOptionPane.showMessageDialog(this, "Sending Report");
+        // Aquí va la lógica para enviar el reporte
+        JOptionPane.showMessageDialog(this, "Here you can send a report");
     }
 
     private void onViewFeedback() {
-        if (currentPatientId == null) {
-            JOptionPane.showMessageDialog(this, "No patient selected");
-            return;
-        }
-        // Aquí iría la lógica para ver el feedback del doctor
-        JOptionPane.showMessageDialog(this, "Viewing Doctor Feedback");
+        // Aquí va la lógica para ver el feedback del doctor
+        JOptionPane.showMessageDialog(this, "Here you can view doctor feedback");
     }
 }
-

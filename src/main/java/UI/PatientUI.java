@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 
 public class PatientUI {
     Socket socket2 = null;
+    private Patient loggedInPatient;
+    private Patient registerPatient;
 
     public void register(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         // Crear un objeto Patient y obtener los datos del paciente
@@ -336,63 +338,72 @@ public class PatientUI {
             String dob,
             String sex,
             String email,
-            String password,
             int phone,
             int insurance,
+            String password,
             Socket socket,
             SendDataViaNetwork sendDataViaNetwork,
             ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
 
-        sendDataViaNetwork.sendInt(2); // Registrar paciente
+        sendDataViaNetwork.sendInt(2); // registrar doctor
 
         Patient patient = new Patient();
         patient.setName(name);
         patient.setSurname(surname);
         patient.setDni(dni);
-        patient.setDateOfBirth(Date.valueOf(dob));  // "YYYY-MM-DD"
+        patient.setDateOfBirth(Date.valueOf(dob));
         patient.setSex(sex);
         patient.setEmail(email);
-        patient.setPhone(phone);  // Guardamos el teléfono
-        patient.setInsurance(insurance);  // Guardamos el seguro
+        patient.setPhone(phone);
+        patient.setInsurance(insurance);
 
         byte[] passwordBytes = password.getBytes();
         Role role = new Role("Patient");
         User user = new User(email, passwordBytes, role);
 
-        sendDataViaNetwork.sendStrings("OK"); // Confirmación al servidor
+        sendDataViaNetwork.sendStrings("OK");
         sendDataViaNetwork.sendPatient(patient);
         sendDataViaNetwork.sendUser(user);
 
-        String response = receiveDataViaNetwork.receiveString();  // Recibir la respuesta del servidor
-        return "SUCCESS".equals(response);  // Devolver si fue exitoso o no
+        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
+        return response.equals("SUCCESS");
     }
+
     public boolean logInFromGUI(
-            String email,
+            String username,
             String password,
             Socket socket,
             SendDataViaNetwork sendDataViaNetwork,
             ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
 
-        sendDataViaNetwork.sendInt(1); // Código para log in (1 = paciente)
+        sendDataViaNetwork.sendInt(1); // login
 
-        // Enviar email y password
+        // mensaje inicial del servidor, lo leemos y lo ignoramos o mostramos en consola
+        String serverMsg = receiveDataViaNetwork.receiveString();
+        System.out.println("Server says: " + serverMsg);
+
+        byte[] passwordBytes = password.getBytes();
+        Role role = new Role("Doctor");
+        User user = new User(username, passwordBytes, role);
+
         sendDataViaNetwork.sendStrings("OK");
-        User user = new User(email, password.getBytes(), new Role("Patient"));
         sendDataViaNetwork.sendUser(user);
 
-        // Esperamos la respuesta del servidor
-        String response = receiveDataViaNetwork.receiveString();  // "SUCCESS" o "ERROR"
-        if ("SUCCESS".equals(response)) {
-            Patient patient = receiveDataViaNetwork.recievePatient();
-            if (patient != null) {
-                System.out.println("Log in successful");
-                return true;
-            }
-        } else {
-            System.out.println("User or password is incorrect");
+        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
+        if (!response.equals("SUCCESS")) {
+            return false;
         }
-        return false;  // Si no es exitoso
+
+        Doctor doctor = receiveDataViaNetwork.receiveDoctor();
+        System.out.println("Doctor logged in: " + doctor);
+        return doctor != null;
     }
+
+    // Este método nos permite obtener al paciente logueado
+    public Patient getLoggedInPatient() {
+        return loggedInPatient;
+    }
+
     public void insertMedicalInformationFromGUI(
             int patientId,
             List<Symptom> selectedSymptoms,  // Lista de síntomas seleccionados
