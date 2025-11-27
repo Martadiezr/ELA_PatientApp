@@ -311,7 +311,7 @@ public class PatientUI {
 
                 if(medicalInformation != null){
                     sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
-                    feedback = medicalInformation.toString();
+                    feedback = medicalInformation.getFeedback();
                     System.out.println("The feedback from the doctor is:");
                     System.out.println(feedback);
                     PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork , socket);
