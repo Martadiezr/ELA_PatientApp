@@ -7,6 +7,7 @@ import SendData.ReceiveDataViaNetwork;
 import SendData.SendDataViaNetwork;
 import pojos.*;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.Date;
@@ -328,6 +329,110 @@ public class PatientUI {
             System.exit(0);
         }
     }
+    public boolean registerFromGUI(
+            String name,
+            String surname,
+            String dni,
+            String dob,
+            String sex,
+            String email,
+            String password,
+            int phone,
+            int insurance,
+            Socket socket,
+            SendDataViaNetwork sendDataViaNetwork,
+            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+
+        sendDataViaNetwork.sendInt(2); // Registrar paciente
+
+        Patient patient = new Patient();
+        patient.setName(name);
+        patient.setSurname(surname);
+        patient.setDni(dni);
+        patient.setDateOfBirth(Date.valueOf(dob));  // "YYYY-MM-DD"
+        patient.setSex(sex);
+        patient.setEmail(email);
+        patient.setPhone(phone);  // Guardamos el teléfono
+        patient.setInsurance(insurance);  // Guardamos el seguro
+
+        byte[] passwordBytes = password.getBytes();
+        Role role = new Role("Patient");
+        User user = new User(email, passwordBytes, role);
+
+        sendDataViaNetwork.sendStrings("OK"); // Confirmación al servidor
+        sendDataViaNetwork.sendPatient(patient);
+        sendDataViaNetwork.sendUser(user);
+
+        String response = receiveDataViaNetwork.receiveString();  // Recibir la respuesta del servidor
+        return "SUCCESS".equals(response);  // Devolver si fue exitoso o no
+    }
+    public boolean logInFromGUI(
+            String email,
+            String password,
+            Socket socket,
+            SendDataViaNetwork sendDataViaNetwork,
+            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+
+        sendDataViaNetwork.sendInt(1); // Código para log in (1 = paciente)
+
+        // Enviar email y password
+        sendDataViaNetwork.sendStrings("OK");
+        User user = new User(email, password.getBytes(), new Role("Patient"));
+        sendDataViaNetwork.sendUser(user);
+
+        // Esperamos la respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();  // "SUCCESS" o "ERROR"
+        if ("SUCCESS".equals(response)) {
+            Patient patient = receiveDataViaNetwork.recievePatient();
+            if (patient != null) {
+                System.out.println("Log in successful");
+                return true;
+            }
+        } else {
+            System.out.println("User or password is incorrect");
+        }
+        return false;  // Si no es exitoso
+    }
+    public void insertMedicalInformationFromGUI(
+            int patientId,
+            List<Symptom> selectedSymptoms,  // Lista de síntomas seleccionados
+            Socket socket,
+            SendDataViaNetwork sendDataViaNetwork,
+            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+
+        sendDataViaNetwork.sendInt(1); // Indicar al servidor que estamos registrando información médica
+
+        MedicalInformation medicalInformation = new MedicalInformation();
+        Date dateReport = Date.valueOf(java.time.LocalDate.now());
+        medicalInformation.setReportDate(dateReport);
+
+        // Asignar los síntomas seleccionados a la información médica
+        medicalInformation.setSymptoms(selectedSymptoms);
+
+        // Pedir los medicamentos
+        String medicationsText = JOptionPane.showInputDialog("Enter the medications you are using (separate by comma):");
+        if (medicationsText != null && !medicationsText.isEmpty()) {
+            List<String> medicationsList = Arrays.asList(medicationsText.split(","));
+            medicalInformation.setMedication(medicationsList);
+        }
+
+        // Enviar la información médica al servidor
+        sendDataViaNetwork.sendMedicalInformation(medicalInformation);
+
+        // Esperar la respuesta del servidor
+        String serverResponse = receiveDataViaNetwork.receiveString();
+        if ("RECEIVED MEDICAL INFORMATION".equals(serverResponse)) {
+            System.out.println("Medical information successfully sent!");
+            // Proceder con lo que necesites después de enviar la información médica
+        } else {
+            System.out.println("Error: " + serverResponse);
+        }
+    }
+
+
+
+
+
 
 
 
