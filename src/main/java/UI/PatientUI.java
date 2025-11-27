@@ -331,78 +331,51 @@ public class PatientUI {
             System.exit(0);
         }
     }
-    public boolean registerFromGUI(
-            String name,
-            String surname,
-            String dni,
-            String dob,
-            String sex,
-            String email,
-            int phone,
-            int insurance,
-            String password,
-            Socket socket,
-            SendDataViaNetwork sendDataViaNetwork,
-            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-
-        sendDataViaNetwork.sendInt(2); // registrar doctor
-
-        Patient patient = new Patient();
-        patient.setName(name);
-        patient.setSurname(surname);
-        patient.setDni(dni);
-        patient.setDateOfBirth(Date.valueOf(dob));
-        patient.setSex(sex);
-        patient.setEmail(email);
-        patient.setPhone(phone);
-        patient.setInsurance(insurance);
-
-        byte[] passwordBytes = password.getBytes();
-        Role role = new Role("Patient");
-        User user = new User(email, passwordBytes, role);
-
-        sendDataViaNetwork.sendStrings("OK");
-        sendDataViaNetwork.sendPatient(patient);
-        sendDataViaNetwork.sendUser(user);
-
-        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
-        return response.equals("SUCCESS");
-    }
-
-    public boolean logInFromGUI(
-            String username,
-            String password,
-            Socket socket,
-            SendDataViaNetwork sendDataViaNetwork,
-            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-
-        sendDataViaNetwork.sendInt(1); // login
-
-        // mensaje inicial del servidor, lo leemos y lo ignoramos o mostramos en consola
-        String serverMsg = receiveDataViaNetwork.receiveString();
-        System.out.println("Server says: " + serverMsg);
-
-        byte[] passwordBytes = password.getBytes();
-        Role role = new Role("Doctor");
-        User user = new User(username, passwordBytes, role);
-
-        sendDataViaNetwork.sendStrings("OK");
-        sendDataViaNetwork.sendUser(user);
-
-        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
-        if (!response.equals("SUCCESS")) {
-            return false;
-        }
-
-        Doctor doctor = receiveDataViaNetwork.receiveDoctor();
-        System.out.println("Doctor logged in: " + doctor);
-        return doctor != null;
-    }
-
-    // Este método nos permite obtener al paciente logueado
     public Patient getLoggedInPatient() {
-        return loggedInPatient;
+        return loggedInPatient;  // Devuelve el paciente logueado
     }
+    /**public boolean registerFromGUI(String name, String surname, String dni, String dob,
+                                   String sex, String email, String password, int phone,
+                                   int insurance, Socket socket,
+                                   SendDataViaNetwork sendDataViaNetwork,
+                                   ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        sendDataViaNetwork.sendInt(2);  // Indicar que estamos registrando al paciente
+
+        // Crear un objeto Patient con los datos proporcionados
+        Patient patient = new Patient(name,surname,dni,dob,sex,phone,email,insurance);
+
+        // Enviar la información del paciente al servidor
+        sendDataViaNetwork.sendPatient(patient);
+
+        // Esperar respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();
+        if ("SUCCESS".equals(response)) {
+            loggedInPatient = patient;  // Guardamos el paciente registrado
+            return true;
+        }
+        return false;  // Registro fallido
+    }**/
+
+
+    public boolean logInFromGUI(String email, String password, Socket socket,
+                                SendDataViaNetwork sendDataViaNetwork,
+                                ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        sendDataViaNetwork.sendInt(1);  // Indicar que estamos logueándonos
+
+        // Enviar email y password al servidor
+        sendDataViaNetwork.sendStrings(email);
+        sendDataViaNetwork.sendStrings(password);
+
+        // Esperar respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();
+        if ("SUCCESS".equals(response)) {
+            // Si el login es exitoso, recibimos los datos del paciente
+            loggedInPatient = receiveDataViaNetwork.recievePatient();  // Guardamos el paciente logueado
+            return true;
+        }
+        return false;  // Login fallido
+    }
+
 
     public void insertMedicalInformationFromGUI(
             int patientId,

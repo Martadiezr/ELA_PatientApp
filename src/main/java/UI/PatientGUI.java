@@ -48,7 +48,7 @@ public class PatientGUI extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                PatientClientContext context = new PatientClientContext("localhost", 8888);
+               PatientClientContext context = new PatientClientContext("localhost", 8888);
                 new PatientGUI(context);
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null,
@@ -58,6 +58,7 @@ public class PatientGUI extends JFrame {
             }
         });
     }
+
 
     // Crear el panel de autenticación (Login y Register)
     private JPanel createAuthPanel() {
@@ -75,7 +76,7 @@ public class PatientGUI extends JFrame {
         registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         loginButton.addActionListener(e -> showLoginForm());
-        registerButton.addActionListener(e -> showRegisterForm());
+        //registerButton.addActionListener(e -> showRegisterForm());
 
         panel.add(Box.createVerticalStrut(40));
         panel.add(title);
@@ -123,7 +124,10 @@ public class PatientGUI extends JFrame {
                     dialog.dispose();
                     cardLayout.show(mainPanel, "MENU");  // Cambiar a la pantalla de menú
                 } else {
-                    JOptionPane.showMessageDialog(dialog, "Incorrect user or password", "Login error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog,
+                            "Incorrect user or password",
+                            "Login error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(dialog,
@@ -138,7 +142,7 @@ public class PatientGUI extends JFrame {
     }
 
     // Mostrar el formulario de registro
-    private void showRegisterForm() {
+    /**private void showRegisterForm() {
         JDialog dialog = new JDialog(this, "Register", true);
         dialog.setSize(450, 350);
         dialog.setLayout(new GridLayout(8, 2));
@@ -205,7 +209,7 @@ public class PatientGUI extends JFrame {
 
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-    }
+    }**/
 
     // Crear el panel del menú de opciones del paciente
     private JPanel createMenuPanel() {
@@ -245,23 +249,20 @@ public class PatientGUI extends JFrame {
         return panel;
     }
 
+    // Métodos de opción
     private void onRegisterMedicalInfo() {
-        // Aquí va la lógica para registrar la información médica
         JOptionPane.showMessageDialog(this, "Here you can register medical information");
     }
 
     private void onRecordSignal() {
-        // Aquí va la lógica para grabar la señal
         JOptionPane.showMessageDialog(this, "Here you can record a signal");
     }
 
     private void onSendReport() {
-        // Aquí va la lógica para enviar el reporte
         JOptionPane.showMessageDialog(this, "Here you can send a report");
     }
 
     private void onViewFeedback() {
-        // Aquí va la lógica para ver el feedback del doctor
         JOptionPane.showMessageDialog(this, "Here you can view doctor feedback");
     }
 }
