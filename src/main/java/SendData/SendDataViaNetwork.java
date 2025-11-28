@@ -64,17 +64,17 @@ public class SendDataViaNetwork {
     }
 
 
-    // Método para enviar la señal grabada al servidor
-    public void sendSignal(Frame[] frames) throws IOException {
-        for (Frame frame : frames) {
-            // Enviar cada valor de los canales analógicos (puedes elegir cómo procesar los datos)
-            for (int i = 0; i < frame.analog.length; i++) {
-                // Aquí, enviamos los valores de cada canal analógico. Puedes convertirlo si es necesario
-                dataOutputStream.writeInt(frame.analog[i]);  // Enviar valor de cada canal analógico
-            }
-        }
-        dataOutputStream.flush();  // Asegurarse de que los datos se envíen
-    }
+//    // Método para enviar la señal grabada al servidor
+//    public void sendSignal(Frame[] frames) throws IOException {
+//        for (Frame frame : frames) {
+//            // Enviar cada valor de los canales analógicos (puedes elegir cómo procesar los datos)
+//            for (int i = 0; i < frame.analog.length; i++) {
+//                // Aquí, enviamos los valores de cada canal analógico. Puedes convertirlo si es necesario
+//                dataOutputStream.writeInt(frame.analog[i]);  // Enviar valor de cada canal analógico
+//            }
+//        }
+//        dataOutputStream.flush();  // Asegurarse de que los datos se envíen
+//    }
 
     public void releaseResources() {
         try {
@@ -123,6 +123,26 @@ public class SendDataViaNetwork {
             // si tu Symptom tiene más cosas, las vas escribiendo aquí en el mismo orden
         }
 
+        dataOutputStream.flush();
+    }
+
+    public void sendSignal(Signal signal) throws IOException {
+        // 1. Enviar el TIPO de señal (EMG o ACC) convertido a String
+        dataOutputStream.writeUTF(signal.getType().toString());
+
+        // 2. Enviar el ID del CLIENTE (paciente)
+        dataOutputStream.writeInt(signal.getClientId());
+
+        // 3. Enviar el TAMAÑO de la lista de valores (para que el servidor sepa cuántos leer)
+        List<Integer> values = signal.getValues();
+        dataOutputStream.writeInt(values.size());
+
+        // 4. Enviar los VALORES uno por uno en un bucle
+        for (Integer value : values) {
+            dataOutputStream.writeInt(value);
+        }
+
+        // Aseguramos el envío
         dataOutputStream.flush();
     }
 

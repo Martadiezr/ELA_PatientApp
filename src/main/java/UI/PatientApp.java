@@ -19,7 +19,7 @@ public class PatientApp {
         while (running) {
             String ipAddress = Utilities.readString("Enter the IP address of the server to connect to:\n");
             try {
-                Socket socket = new Socket("localhost", 8000);
+                Socket socket = new Socket("localhost", 8888);
                 SendDataViaNetwork sendDataViaNetwork = new SendDataViaNetwork(socket);
                 ReceiveDataViaNetwork receiveDataViaNetwork = new ReceiveDataViaNetwork(socket);
                 sendDataViaNetwork.sendInt(1);  // Se asume que se está enviando un código para verificar la conexión
@@ -85,25 +85,25 @@ public class PatientApp {
         PatientUI patient = new PatientUI();
 
         while (running) {
+            System.out.println("\n--- PATIENT MENU ---");
             System.out.println("1- Insert medical information");
-            System.out.println("2- Record signal");
-            System.out.println("3- Send signal");
-            System.out.println("4- See doctor’s feedback");
+            System.out.println("2- Record & Send signal");
+            System.out.println("3- See doctor’s feedback");
             System.out.println("0- Exit");
-            int option = scanner.nextInt();
+
+            int option = Utilities.readInteger("Choose option: ");
 
             switch (option) {
                 case 1:
-                    patient.insertMedicalInformation(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a insertMedicalInformation() en la clase Paciente
+                    patient.insertMedicalInformation(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);
                     break;
                 case 2:
-                    patient.recordSignal();  // Llama a recordSignal() en la clase Paciente
+                    // Esta opción ahora hace TODO: Grabar y Enviar
+                    patient.recordAndSendSignal(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);
                     break;
                 case 3:
-                    patient.sendSignal();  // Llama a sendSignal() en la clase Paciente
-                    break;
-                case 4:
-                    patient.seeDoctorFeedback(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);  // Llama a seeDoctorFeedback() en la clase Paciente
+                    // Movido del 4 al 3
+                    patient.seeDoctorFeedback(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);
                     break;
                 case 0:
                     running = false;
@@ -114,5 +114,4 @@ public class PatientApp {
             }
         }
     }
-
 }
