@@ -331,87 +331,199 @@ public class PatientUI {
             System.exit(0);
         }
     }
-    public Patient getLoggedInPatient() {
-        return loggedInPatient;  // Devuelve el paciente logueado
-    }
-    /**public boolean registerFromGUI(String name, String surname, String dni, String dob,
-                                   String sex, String email, String password, int phone,
-                                   int insurance, Socket socket,
-                                   SendDataViaNetwork sendDataViaNetwork,
-                                   ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-        sendDataViaNetwork.sendInt(2);  // Indicar que estamos registrando al paciente
-
-        // Crear un objeto Patient con los datos proporcionados
-        Patient patient = new Patient(name,surname,dni,dob,sex,phone,email,insurance);
-
-        // Enviar la información del paciente al servidor
-        sendDataViaNetwork.sendPatient(patient);
-
-        // Esperar respuesta del servidor
-        String response = receiveDataViaNetwork.receiveString();
-        if ("SUCCESS".equals(response)) {
-            loggedInPatient = patient;  // Guardamos el paciente registrado
-            return true;
-        }
-        return false;  // Registro fallido
-    }**/
 
 
-    public boolean logInFromGUI(String email, String password, Socket socket,
-                                SendDataViaNetwork sendDataViaNetwork,
-                                ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-        sendDataViaNetwork.sendInt(1);  // Indicar que estamos logueándonos
 
-        // Enviar email y password al servidor
-        sendDataViaNetwork.sendStrings(email);
-        sendDataViaNetwork.sendStrings(password);
-
-        // Esperar respuesta del servidor
-        String response = receiveDataViaNetwork.receiveString();
-        if ("SUCCESS".equals(response)) {
-            // Si el login es exitoso, recibimos los datos del paciente
-            loggedInPatient = receiveDataViaNetwork.recievePatient();  // Guardamos el paciente logueado
-            return true;
-        }
-        return false;  // Login fallido
-    }
-
-
-    public void insertMedicalInformationFromGUI(
-            int patientId,
-            List<Symptom> selectedSymptoms,  // Lista de síntomas seleccionados
+    public boolean logInFromGUI(
+            String username,
+            String password,
             Socket socket,
             SendDataViaNetwork sendDataViaNetwork,
             ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
 
-        sendDataViaNetwork.sendInt(1); // Indicar al servidor que estamos registrando información médica
+        sendDataViaNetwork.sendInt(1); // login
 
-        MedicalInformation medicalInformation = new MedicalInformation();
-        Date dateReport = Date.valueOf(java.time.LocalDate.now());
-        medicalInformation.setReportDate(dateReport);
+        // mensaje inicial del servidor, lo leemos y lo ignoramos o mostramos en consola
+        String serverMsg = receiveDataViaNetwork.receiveString();
+        System.out.println("Server says: " + serverMsg);
 
-        // Asignar los síntomas seleccionados a la información médica
-        medicalInformation.setSymptoms(selectedSymptoms);
+        byte[] passwordBytes = password.getBytes();
+        Role role = new Role("Patient");
+        User user = new User(username, passwordBytes, role);
 
-        // Pedir los medicamentos
-        String medicationsText = JOptionPane.showInputDialog("Enter the medications you are using (separate by comma):");
-        if (medicationsText != null && !medicationsText.isEmpty()) {
-            List<String> medicationsList = Arrays.asList(medicationsText.split(","));
-            medicalInformation.setMedication(medicationsList);
+        sendDataViaNetwork.sendStrings("OK");
+        sendDataViaNetwork.sendUser(user);
+
+        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
+        if (!response.equals("SUCCESS")) {
+            return false;
         }
 
-        // Enviar la información médica al servidor
-        sendDataViaNetwork.sendMedicalInformation(medicalInformation);
-
-        // Esperar la respuesta del servidor
-        String serverResponse = receiveDataViaNetwork.receiveString();
-        if ("RECEIVED MEDICAL INFORMATION".equals(serverResponse)) {
-            System.out.println("Medical information successfully sent!");
-            // Proceder con lo que necesites después de enviar la información médica
-        } else {
-            System.out.println("Error: " + serverResponse);
-        }
+        Patient patient = receiveDataViaNetwork.recievePatient();
+        System.out.println("Patient logged in: " + patient);
+        return patient != null;
     }
+    public boolean registerFromGUI(
+            String name,
+            String surname,
+            String dni,
+            String dob,
+            String sex,
+            int phone,
+            int insurance,
+            String email,
+            String password,
+            Socket socket,
+            SendDataViaNetwork sendDataViaNetwork,
+            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+
+        sendDataViaNetwork.sendInt(2); // registrar doctor
+
+        Patient patient = new Patient();
+        patient.setName(name);
+        patient.setSurname(surname);
+        patient.setDni(dni);
+        patient.setDateOfBirth(Date.valueOf(dob));
+        patient.setSex(sex);
+        patient.setPhone(phone);
+        patient.setInsurance(insurance);
+        patient.setEmail(email);
+
+        byte[] passwordBytes = password.getBytes();
+        Role role = new Role("Patient");
+        User user = new User(email, passwordBytes, role);
+
+        sendDataViaNetwork.sendStrings("OK");
+        sendDataViaNetwork.sendPatient(patient);
+        sendDataViaNetwork.sendUser(user);
+
+        String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
+        return response.equals("SUCCESS");
+    }
+    // Versión pensada para estar dentro de PatientGUI (por ejemplo)
+// Si está en otra clase, cambia "this" por un parámetro Component parent
+    /**public void insertMedicalInformationGUI(Patient patient,
+                                            Socket socket,
+                                            SendDataViaNetwork sendDataViaNetwork,
+                                            ReceiveDataViaNetwork receiveDataViaNetwork) {
+        try {
+            // 1. Indicamos al servidor que vamos a registrar medical information
+            sendDataViaNetwork.sendInt(1);
+
+            MedicalInformation medicalInformation = new MedicalInformation();
+            Date dateReport = Date.valueOf(java.time.LocalDate.now());
+            medicalInformation.setReportDate(dateReport);
+
+            // 2. Pedimos síntomas al servidor
+            sendDataViaNetwork.sendStrings("SEND SYMPTOMS");
+            String message = receiveDataViaNetwork.receiveString();
+
+            if (!"OK".equals(message)) {
+                JOptionPane.showMessageDialog(this,
+                        "Could not fetch the symptoms from the server",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 3. Recibimos lista de síntomas
+            List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
+            if (symptoms == null || symptoms.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No symptoms received from server",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 4. Mostramos lista de síntomas en un JList multiselección
+            String[] symptomNames = new String[symptoms.size()];
+            for (int i = 0; i < symptoms.size(); i++) {
+                symptomNames[i] = (i + 1) + " - " + symptoms.get(i).getName(); // o toString()
+            }
+
+            JList<String> symptomJList = new JList<>(symptomNames);
+            symptomJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+            int option = JOptionPane.showConfirmDialog(
+                    this,
+                    new JScrollPane(symptomJList),
+                    "Please select your symptoms (Ctrl+click para varios)",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (option != JOptionPane.OK_OPTION) {
+                // El usuario canceló
+                return;
+            }
+
+            int[] selectedIndices = symptomJList.getSelectedIndices();
+            if (selectedIndices == null || selectedIndices.length == 0) {
+                JOptionPane.showMessageDialog(this,
+                        "You must select at least one symptom",
+                        "Warning",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            List<Symptom> symptomsOfPatient = new ArrayList<>();
+            for (int idx : selectedIndices) {
+                // Aquí ya NO usamos ni Integer.parseInt ni Utilities.readInteger
+                symptomsOfPatient.add(symptoms.get(idx));
+            }
+
+            // 5. Pedimos medicación en un input (separada por comas)
+            String medsInput = JOptionPane.showInputDialog(
+                    this,
+                    "Insert the medication you have been using recently,\n" +
+                            "separated by commas. Leave empty if you are not medicated:",
+                    "Medication",
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            List<String> medicaments = new ArrayList<>();
+            if (medsInput != null && !medsInput.trim().isEmpty()) {
+                String[] parts = medsInput.split(",");
+                for (String p : parts) {
+                    String med = p.trim();
+                    if (!med.isEmpty()) {
+                        medicaments.add(med);
+                    }
+                }
+            }
+
+            // 6. Enviamos la información médica
+            medicalInformation.setSymptoms(symptomsOfPatient);
+            medicalInformation.setMedication(medicaments);
+
+            sendDataViaNetwork.sendMedicalInformation(medicalInformation);
+            String succesfull = receiveDataViaNetwork.receiveString();
+
+            if ("RECEIVED MEDICAL INFORMATION".equals(succesfull)) {
+                JOptionPane.showMessageDialog(this,
+                        "Medical information successfully sent!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Error sending medical information",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error in connection: " + e.getMessage(),
+                    "Connection error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            // Aquí, si quieres, puedes llamar a tu releaseResources(...)
+            // releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
+        }
+    }**/
+
+
 
 
 
