@@ -1,5 +1,7 @@
 package UI;
 
+import pojos.Patient;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -278,17 +280,17 @@ public class PatientGUI extends JFrame {
         title.setFont(new Font("Arial", Font.BOLD, 18));
 
         JButton insertMedicalInfoButton = new JButton("Insert medical info");
-        JButton updateFeedbackButton = new JButton("Record signal and send signal");
-        JButton viewSignalButton = new JButton("See feedbakc");
+        JButton signalButton = new JButton("Record signal and send signal");
+        JButton viewSignalButton = new JButton("See feedback");
         JButton modifyDataButton = new JButton("Change patient data");
 
         insertMedicalInfoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        updateFeedbackButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        signalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         viewSignalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         modifyDataButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-       // insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
-        // updateFeedbackButton.addActionListener(e -> onUpdateFeedback());
+        insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
+       signalButton.addActionListener(e -> onsignalButton());
         // viewSignalButton.addActionListener(e -> onViewSignal());
        // modifyDataButton.addActionListener(e -> onChangePatientData());
 
@@ -297,7 +299,7 @@ public class PatientGUI extends JFrame {
         panel.add(Box.createVerticalStrut(30));
         panel.add(insertMedicalInfoButton);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(updateFeedbackButton);
+        panel.add(signalButton);
         panel.add(Box.createVerticalStrut(10));
         panel.add(viewSignalButton);
         panel.add(Box.createVerticalStrut(10));
@@ -305,7 +307,7 @@ public class PatientGUI extends JFrame {
 
         return panel;
     }
-    /**public void oninsertMedicalInfoButton() {
+    public void oninsertMedicalInfoButton() {
         // 1. Comprobamos que hay contexto (estás conectado al servidor)
         if (context == null) {
             JOptionPane.showMessageDialog(this,
@@ -317,6 +319,7 @@ public class PatientGUI extends JFrame {
 
         // 2. Conseguimos el PatientUI del contexto
         PatientUI patientUI = context.getPatientUI();
+        Patient loggedInPatient = patientUI.getLoggedInPatient();
 
         // 3. Obtenemos el paciente logueado
        // pojos.Patient loggedInPatient = patientUI.getLoggedInPatient();
@@ -329,24 +332,16 @@ public class PatientGUI extends JFrame {
         }
 
         // 4. Llamamos al método que envía la información médica (versión GUI)
-        try {
             patientUI.insertMedicalInformationGUI(
                     loggedInPatient,
                     context.getSocket(),
                     context.getSendData(),
                     context.getReceiveData()
             );
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error sending medical information:\n" + ex.getMessage(),
-                    "Connection error",
-                    JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
-        }
-    }**/
 
+    }
+    public void onsignalButton() {
 
-
-
+    }
 
 }
