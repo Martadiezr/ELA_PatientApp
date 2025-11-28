@@ -1,20 +1,28 @@
 package UI;
 
-import BITalino.*;
+import BITalino.BITalino;
+import BITalino.DeviceDiscoverer;
+import BITalino.Frame;
 import SendData.ReceiveDataViaNetwork;
 import SendData.SendDataViaNetwork;
 import pojos.*;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PatientUI {
-    //Socket socket2 = null;
+    Socket socket2 = null;
+    private Patient loggedInPatient;
+    private Patient registerPatient;
 
     public void register(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         // Crear un objeto Patient y obtener los datos del paciente
@@ -132,81 +140,81 @@ public class PatientUI {
 
 
 
-//    public void sendSignal() {
-//        // Crear una instancia del objeto BITalino
-//        BITalino bitalinoDevice = new BITalino();
-//        DeviceDiscoverer deviceDiscoverer = new DeviceDiscoverer();
-//        try {
-//            // Buscar y conectar al dispositivo BITalino
-//            deviceDiscoverer.connectToBitalino();
-//
-//            // Establecer los canales que deseas leer (por ejemplo, los primeros dos canales analógicos)
-//            int[] analogChannels = {0, 1};  // Modifica según los canales que necesites
-//            bitalinoDevice.start(analogChannels);
-//
-//            // Leer la señal, por ejemplo, leer 100 muestras
-//            Frame[] frames = bitalinoDevice.read(100);  // Aquí se obtiene el array de frames (señal grabada)
-//
-//            // Procesar los datos de la señal y enviarlos al servidor
-//            // Aquí puedes extraer la señal de los frames y enviarla
-//            sendRecordedSignalToServer(frames);  // Usamos 'frames' en lugar de 'signalData'
-//
-//            // Detener el dispositivo BITalino después de grabar la señal
-//            bitalinoDevice.stop();
-//            deviceDiscoverer.closeConnection();  // Cerrar la conexión con el dispositivo
-//        } catch (Throwable e) {
-//            e.printStackTrace();
-//            System.err.println("Error al registrar y enviar la señal: " + e.getMessage());
-//        }
-//    }
+    public void sendSignal() {
+        // Crear una instancia del objeto BITalino
+        BITalino bitalinoDevice = new BITalino();
+        DeviceDiscoverer deviceDiscoverer = new DeviceDiscoverer();
+        try {
+            // Buscar y conectar al dispositivo BITalino
+            deviceDiscoverer.connectToBitalino();
 
-//    private void sendRecordedSignalToServer(Frame[] frames) {
-//        // Aquí necesitarás convertir los datos del Frame en un formato que el servidor pueda entender
-//        // Por ejemplo, puedes extraer los valores de los canales analógicos y enviarlos al servidor
-//        try {
-//            // Crear un objeto de SendDataViaNetwork para enviar los datos al servidor
-//            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
-//
-//            // Convertir los datos del Frame a un formato que el servidor pueda manejar (por ejemplo, un array de int o float)
-//            // Aquí estamos enviando solo los valores de los canales analógicos
-//            for (Frame frame : frames) {
-//                for (int i = 0; i < frame.analog.length; i++) {
-//                    sendData.sendInt(frame.analog[i]);  // Enviar cada valor de los canales analógicos
-//                }
-//            }
-//        } catch (IOException e) {
-//            System.err.println("Error al enviar la señal al servidor: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
+            // Establecer los canales que deseas leer (por ejemplo, los primeros dos canales analógicos)
+            int[] analogChannels = {0, 1};  // Modifica según los canales que necesites
+            bitalinoDevice.start(analogChannels);
 
-//    public void recordSignal() {
-//        // Crear una instancia del objeto BITalino
-//        BITalino bitalinoDevice = new BITalino();
-//        DeviceDiscoverer deviceDiscoverer = new DeviceDiscoverer();
-//        try {
-//            // Buscar y conectar al dispositivo BITalino
-//            deviceDiscoverer.connectToBitalino();
-//
-//            // Establecer los canales que deseas leer (por ejemplo, los primeros dos canales analógicos)
-//            int[] analogChannels = {0, 1};  // Modifica según los canales que necesites
-//            bitalinoDevice.start(analogChannels);
-//
-//            // Leer la señal, por ejemplo, leer 100 muestras
-//            Frame[] frames = bitalinoDevice.read(100);  // Aquí se obtiene el array de frames (señal grabada)
-//
-//            // Enviar la señal grabada al servidor
-//            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
-//            sendData.sendSignal(frames);  // Pasar los frames grabados al método sendSignal
-//
-//            // Detener el dispositivo BITalino después de grabar la señal
-//            bitalinoDevice.stop();
-//            deviceDiscoverer.closeConnection();  // Cerrar la conexión con el dispositivo
-//        } catch (Throwable e) {
-//            e.printStackTrace();
-//            System.err.println("Error al grabar la señal: " + e.getMessage());
-//        }
-//    }
+            // Leer la señal, por ejemplo, leer 100 muestras
+            Frame[] frames = bitalinoDevice.read(100);  // Aquí se obtiene el array de frames (señal grabada)
+
+            // Procesar los datos de la señal y enviarlos al servidor
+            // Aquí puedes extraer la señal de los frames y enviarla
+            sendRecordedSignalToServer(frames);  // Usamos 'frames' en lugar de 'signalData'
+
+            // Detener el dispositivo BITalino después de grabar la señal
+            bitalinoDevice.stop();
+            deviceDiscoverer.closeConnection();  // Cerrar la conexión con el dispositivo
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.err.println("Error al registrar y enviar la señal: " + e.getMessage());
+        }
+    }
+
+    private void sendRecordedSignalToServer(Frame[] frames) {
+        // Aquí necesitarás convertir los datos del Frame en un formato que el servidor pueda entender
+        // Por ejemplo, puedes extraer los valores de los canales analógicos y enviarlos al servidor
+        try {
+            // Crear un objeto de SendDataViaNetwork para enviar los datos al servidor
+            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
+
+            // Convertir los datos del Frame a un formato que el servidor pueda manejar (por ejemplo, un array de int o float)
+            // Aquí estamos enviando solo los valores de los canales analógicos
+            for (Frame frame : frames) {
+                for (int i = 0; i < frame.analog.length; i++) {
+                    sendData.sendInt(frame.analog[i]);  // Enviar cada valor de los canales analógicos
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error al enviar la señal al servidor: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void recordSignal() {
+        // Crear una instancia del objeto BITalino
+        BITalino bitalinoDevice = new BITalino();
+        DeviceDiscoverer deviceDiscoverer = new DeviceDiscoverer();
+        try {
+            // Buscar y conectar al dispositivo BITalino
+            deviceDiscoverer.connectToBitalino();
+
+            // Establecer los canales que deseas leer (por ejemplo, los primeros dos canales analógicos)
+            int[] analogChannels = {0, 1};  // Modifica según los canales que necesites
+            bitalinoDevice.start(analogChannels);
+
+            // Leer la señal, por ejemplo, leer 100 muestras
+            Frame[] frames = bitalinoDevice.read(100);  // Aquí se obtiene el array de frames (señal grabada)
+
+            // Enviar la señal grabada al servidor
+            SendDataViaNetwork sendData = new SendDataViaNetwork(socket2);
+            sendData.sendSignal(frames);  // Pasar los frames grabados al método sendSignal
+
+            // Detener el dispositivo BITalino después de grabar la señal
+            bitalinoDevice.stop();
+            deviceDiscoverer.closeConnection();  // Cerrar la conexión con el dispositivo
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.err.println("Error al grabar la señal: " + e.getMessage());
+        }
+    }
 
     private static void releaseResources(Socket socket,SendDataViaNetwork sendDataViaNetwork,ReceiveDataViaNetwork receiveDataViaNetwork){
         if(sendDataViaNetwork != null && receiveDataViaNetwork != null) {
@@ -289,7 +297,7 @@ public class PatientUI {
 
     public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         try{
-            sendDataViaNetwork.sendInt(3); // Indicar al servidor que se va a registrar medical information
+            sendDataViaNetwork.sendInt(4); // Indicar al servidor que se va a registrar medical information
 
             String feedback = null;
 
@@ -306,7 +314,7 @@ public class PatientUI {
 
                 if(medicalInformation != null){
                     sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
-                    feedback = medicalInformation.toString();
+                    feedback = medicalInformation.getFeedback();
                     System.out.println("The feedback from the doctor is:");
                     System.out.println(feedback);
                     PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork , socket);
@@ -323,66 +331,93 @@ public class PatientUI {
             System.exit(0);
         }
     }
+    public Patient getLoggedInPatient() {
+        return loggedInPatient;  // Devuelve el paciente logueado
+    }
+    /**public boolean registerFromGUI(String name, String surname, String dni, String dob,
+                                   String sex, String email, String password, int phone,
+                                   int insurance, Socket socket,
+                                   SendDataViaNetwork sendDataViaNetwork,
+                                   ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        sendDataViaNetwork.sendInt(2);  // Indicar que estamos registrando al paciente
 
-    public void recordAndSendSignal(Patient patient, Socket socket, SendDataViaNetwork sendData, ReceiveDataViaNetwork receiveData) {
-        try {
-            // 1. Configuración de la grabación
-            System.out.println("--- RECORD NEW SIGNAL ---");
-            System.out.println("Select signal type:");
-            System.out.println("1. Electromyography (EMG)");
-            System.out.println("2. Accelerometer (ACC)");
-            int typeOption = Utilities.readInteger("Option: ");
+        // Crear un objeto Patient con los datos proporcionados
+        Patient patient = new Patient(name,surname,dni,dob,sex,phone,email,insurance);
 
-            TypeSignal typeSignal = null;
-            if (typeOption == 1) {
-                typeSignal = TypeSignal.EMG;
-            } else if (typeOption == 2) {
-                typeSignal = TypeSignal.ACC;
-            } else {
-                System.out.println("Invalid option. Cancelling.");
-                return;
-            }
+        // Enviar la información del paciente al servidor
+        sendDataViaNetwork.sendPatient(patient);
 
-            int seconds = Utilities.readInteger("Enter duration in seconds (e.g., 10): ");
+        // Esperar respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();
+        if ("SUCCESS".equals(response)) {
+            loggedInPatient = patient;  // Guardamos el paciente registrado
+            return true;
+        }
+        return false;  // Registro fallido
+    }**/
 
-            // Opcional: Pedir MAC o dejar vacío para búsqueda automática
-            System.out.println("Enter BITalino MAC address (e.g., 20:17:...) or press ENTER to auto-search:");
-            String macAddress = Utilities.readString("");
-            if (macAddress.trim().isEmpty()) {
-                macAddress = null; // Para que BitalinoService use DeviceDiscoverer
-            }
 
-            // 2. Usar el servicio para adquirir la señal
-            // Instanciamos el servicio con la MAC (o null) y 100 Hz
-            BitalinoService service = new BitalinoService(macAddress, 100);
+    public boolean logInFromGUI(String email, String password, Socket socket,
+                                SendDataViaNetwork sendDataViaNetwork,
+                                ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+        sendDataViaNetwork.sendInt(1);  // Indicar que estamos logueándonos
 
-            System.out.println("Starting acquisition... Please wait.");
-            // Nota: Aquí pasamos patient.getId(). Asegúrate de que el objeto Patient tenga el ID cargado tras el login.
-            // Si tu POJO Patient no tiene getId(), tendrás que añadirlo o gestionarlo.
-            // Asumo que tu Patient tiene un método getId() o similar.
-            int patientId = 0;
-            // patientId = patient.getId(); // DESCOMENTAR SI TU CLASE PATIENT TIENE ID
-            // Si no tiene ID en memoria, usa un valor temporal o arréglalo en el login.
+        // Enviar email y password al servidor
+        sendDataViaNetwork.sendStrings(email);
+        sendDataViaNetwork.sendStrings(password);
 
-            Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
+        // Esperar respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();
+        if ("SUCCESS".equals(response)) {
+            // Si el login es exitoso, recibimos los datos del paciente
+            loggedInPatient = receiveDataViaNetwork.recievePatient();  // Guardamos el paciente logueado
+            return true;
+        }
+        return false;  // Login fallido
+    }
 
-            System.out.println("Signal acquired! Samples recorded: " + signal.getValues().size());
 
-            // 3. Enviar al servidor
-            System.out.println("Sending to server...");
+    public void insertMedicalInformationFromGUI(
+            int patientId,
+            List<Symptom> selectedSymptoms,  // Lista de síntomas seleccionados
+            Socket socket,
+            SendDataViaNetwork sendDataViaNetwork,
+            ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
 
-            // Enviamos el código de operación para "Enviar Señal" (asumimos que es el 3 en tu menú del servidor)
-            sendData.sendInt(2);
+        sendDataViaNetwork.sendInt(1); // Indicar al servidor que estamos registrando información médica
 
-            // Usamos el método que creamos en SendDataViaNetwork
-            sendData.sendSignal(signal);
+        MedicalInformation medicalInformation = new MedicalInformation();
+        Date dateReport = Date.valueOf(java.time.LocalDate.now());
+        medicalInformation.setReportDate(dateReport);
 
-            System.out.println("Signal sent successfully!");
+        // Asignar los síntomas seleccionados a la información médica
+        medicalInformation.setSymptoms(selectedSymptoms);
 
-        } catch (Throwable e) {
-            System.err.println("Error capturing/sending signal: " + e.getMessage());
-            e.printStackTrace();
+        // Pedir los medicamentos
+        String medicationsText = JOptionPane.showInputDialog("Enter the medications you are using (separate by comma):");
+        if (medicationsText != null && !medicationsText.isEmpty()) {
+            List<String> medicationsList = Arrays.asList(medicationsText.split(","));
+            medicalInformation.setMedication(medicationsList);
+        }
+
+        // Enviar la información médica al servidor
+        sendDataViaNetwork.sendMedicalInformation(medicalInformation);
+
+        // Esperar la respuesta del servidor
+        String serverResponse = receiveDataViaNetwork.receiveString();
+        if ("RECEIVED MEDICAL INFORMATION".equals(serverResponse)) {
+            System.out.println("Medical information successfully sent!");
+            // Proceder con lo que necesites después de enviar la información médica
+        } else {
+            System.out.println("Error: " + serverResponse);
         }
     }
+
+
+
+
+
+
+
 
 }
