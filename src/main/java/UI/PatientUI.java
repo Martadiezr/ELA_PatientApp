@@ -254,6 +254,10 @@ public class PatientUI {
 
 
 
+    public Patient getLoggedInPatient() {
+        return loggedInPatient;
+    }
+
     public boolean logInFromGUI(
             String username,
             String password,
@@ -263,7 +267,6 @@ public class PatientUI {
 
         sendDataViaNetwork.sendInt(1); // login
 
-        // mensaje inicial del servidor, lo leemos y lo ignoramos o mostramos en consola
         String serverMsg = receiveDataViaNetwork.receiveString();
         System.out.println("Server says: " + serverMsg);
 
@@ -275,14 +278,22 @@ public class PatientUI {
         sendDataViaNetwork.sendUser(user);
 
         String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
-        if (!response.equals("SUCCESS")) {
+        if (!"SUCCESS".equals(response)) {
             return false;
         }
 
         Patient patient = receiveDataViaNetwork.recievePatient();
         System.out.println("Patient logged in: " + patient);
-        return patient != null;
+
+        if (patient != null) {
+            // AQUÍ ES DONDE REALMENTE “NACE” loggedInPatient
+            this.loggedInPatient = patient;
+            return true;
+        } else {
+            return false;
+        }
     }
+
     public boolean registerFromGUI(
             String name,
             String surname,
@@ -322,10 +333,7 @@ public class PatientUI {
     }
     // Versión pensada para estar dentro de PatientGUI (por ejemplo)
 // Si está en otra clase, cambia "this" por un parámetro Component parent
-    /**public void insertMedicalInformationGUI(Patient patient,
-                                            Socket socket,
-                                            SendDataViaNetwork sendDataViaNetwork,
-                                            ReceiveDataViaNetwork receiveDataViaNetwork) {
+   public void insertMedicalInformationGUI(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
         try {
             // 1. Indicamos al servidor que vamos a registrar medical information
             sendDataViaNetwork.sendInt(1);
@@ -339,7 +347,7 @@ public class PatientUI {
             String message = receiveDataViaNetwork.receiveString();
 
             if (!"OK".equals(message)) {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(null,
                         "Could not fetch the symptoms from the server",
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -349,7 +357,7 @@ public class PatientUI {
             // 3. Recibimos lista de síntomas
             List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
             if (symptoms == null || symptoms.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(null,
                         "No symptoms received from server",
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -359,14 +367,14 @@ public class PatientUI {
             // 4. Mostramos lista de síntomas en un JList multiselección
             String[] symptomNames = new String[symptoms.size()];
             for (int i = 0; i < symptoms.size(); i++) {
-                symptomNames[i] = (i + 1) + " - " + symptoms.get(i).getName(); // o toString()
+                symptomNames[i] = (i + 1) + " - " + symptoms.get(i).getDescription(); // o toString()
             }
 
             JList<String> symptomJList = new JList<>(symptomNames);
             symptomJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             int option = JOptionPane.showConfirmDialog(
-                    this,
+                    null,
                     new JScrollPane(symptomJList),
                     "Please select your symptoms (Ctrl+click para varios)",
                     JOptionPane.OK_CANCEL_OPTION,
@@ -380,7 +388,7 @@ public class PatientUI {
 
             int[] selectedIndices = symptomJList.getSelectedIndices();
             if (selectedIndices == null || selectedIndices.length == 0) {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(null,
                         "You must select at least one symptom",
                         "Warning",
                         JOptionPane.WARNING_MESSAGE);
@@ -395,7 +403,7 @@ public class PatientUI {
 
             // 5. Pedimos medicación en un input (separada por comas)
             String medsInput = JOptionPane.showInputDialog(
-                    this,
+                    null,
                     "Insert the medication you have been using recently,\n" +
                             "separated by commas. Leave empty if you are not medicated:",
                     "Medication",
@@ -421,19 +429,19 @@ public class PatientUI {
             String succesfull = receiveDataViaNetwork.receiveString();
 
             if ("RECEIVED MEDICAL INFORMATION".equals(succesfull)) {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(null,
                         "Medical information successfully sent!",
                         "Success",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this,
+                JOptionPane.showMessageDialog(null,
                         "Error sending medical information",
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
+            JOptionPane.showMessageDialog(null,
                     "Error in connection: " + e.getMessage(),
                     "Connection error",
                     JOptionPane.ERROR_MESSAGE);
@@ -441,7 +449,7 @@ public class PatientUI {
             // Aquí, si quieres, puedes llamar a tu releaseResources(...)
             // releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
         }
-    }**/
+    }
 
 
     public void recordAndSendSignal(Patient patient, Socket socket, SendDataViaNetwork sendData, ReceiveDataViaNetwork receiveData) {
