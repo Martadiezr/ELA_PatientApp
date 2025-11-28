@@ -1,9 +1,8 @@
-package BITalino;
+package BITalino; // O services, según tu paquete
 
 import com.fazecast.jSerialComm.SerialPort;
 import pojos.Signal;
 import pojos.TypeSignal;
-
 
 public class BitalinoService {
 
@@ -21,26 +20,21 @@ public class BitalinoService {
 
         try {
             String foundPort = null;
-
             if (this.macAddress != null && !this.macAddress.trim().isEmpty()) {
                 foundPort = this.macAddress;
             } else {
-                System.out.println("Buscando BITalino automáticamente...");
+                System.out.println("Searching BITalino...");
                 SerialPort[] allPorts = SerialPort.getCommPorts();
-
                 for (SerialPort p : allPorts) {
-                    String name = p.getSystemPortName();
-                    if (name.contains("BITalino") && name.contains("cu.")) {
-                        foundPort = name;
+                    if (p.getSystemPortName().contains("BITalino") && p.getSystemPortName().contains("cu.")) {
+                        foundPort = p.getSystemPortName();
                         break;
                     }
                 }
-
                 if (foundPort == null) {
                     for (SerialPort p : allPorts) {
-                        String name = p.getSystemPortName();
-                        if (name.contains("BITalino")) {
-                            foundPort = name;
+                        if (p.getSystemPortName().contains("BITalino")) {
+                            foundPort = p.getSystemPortName();
                             break;
                         }
                     }
@@ -48,55 +42,57 @@ public class BitalinoService {
             }
 
             if (foundPort == null) {
-                throw new Exception("No se encontró dispositivo BITalino. Asegúrate de que está emparejado.");
+                throw new Exception("Bitalino not found, check the connection.");
             }
 
             bitalino = new BITalino();
-            System.out.println("Conectando a: " + foundPort);
-
+            System.out.println("Connecting to: " + foundPort);
             bitalino.open(foundPort, samplingRate);
 
-            int[] channels = { (type == TypeSignal.EMG) ? 0 : 4 };
-            bitalino.start(channels);
+            int[] channelsToStart;
+            int channelIndexToRead;
 
-            System.out.println("Dispositivo iniciado. Estabilizando (3s)...");
+            if (type == TypeSignal.EMG) {
+                // Si es EMG, activamos solo Canal 0 (A1)
+                channelsToStart = new int[]{0};
+                channelIndexToRead = 0;
+                System.out.println("Configured: EMG (channel A1)");
+            } else {
+                // Si es ACC (u otro), activamos solo Canal 4 (A5)
+                channelsToStart = new int[]{4};
+                channelIndexToRead = 4;
+                System.out.println("Configured: ACC (channel A5)");
+            }
+
+            bitalino.start(channelsToStart);
+
             try { Thread.sleep(3000); } catch (InterruptedException e) {}
 
             int totalSamples = samplingRate * seconds;
-
-            System.out.println("Grabando " + totalSamples + " muestras...");
+            System.out.println("Recording " + totalSamples + " samples...");
 
             for (int i = 0; i < totalSamples; i++) {
-                // Leemos 1 solo frame. Si falla, el timeout de 4s nos protege.
                 Frame[] frames = bitalino.read(1);
 
                 if (frames != null && frames.length > 0) {
-                    int val = (type == TypeSignal.EMG) ? frames[0].analog[0] : frames[0].analog[4];
+                    int val = frames[0].analog[channelIndexToRead];
                     signal.addSample(val);
 
-                    // Feedback visual cada 10 muestras para saber que está vivo
-                    if (i % 10 == 0) System.out.print(".");
+                    if (i % 50 == 0) System.out.print(".");
                 }
             }
 
-            System.out.println("\nLectura finalizada.");
+            System.out.println("\nLecture finished correctly.");
             bitalino.stop();
 
         } catch (Exception e) {
             System.err.println("Error BitalinoService: " + e.getMessage());
-            if (bitalino != null) {
-                try { bitalino.stop(); } catch (Exception ignored) {}
-            }
+            if (bitalino != null) { try { bitalino.stop(); } catch (Exception ignored) {} }
             throw e;
         } finally {
             if (bitalino != null) {
-                try {
-                    bitalino.stop();
-                } catch (Exception ignored) {}
-
-                try {
-                    bitalino.close();
-                } catch (Exception ignored) {}
+                try { bitalino.stop(); } catch (Exception ignored) {}
+                try { bitalino.close(); } catch (Exception ignored) {}
             }
         }
 
