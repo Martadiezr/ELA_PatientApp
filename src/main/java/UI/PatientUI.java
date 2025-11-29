@@ -215,42 +215,75 @@ public class PatientUI {
         }
     }
 
-    public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-        try{
-            sendDataViaNetwork.sendInt(3); // Indicar al servidor que se va a registrar medical information
+public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+    try {
+        sendDataViaNetwork.sendInt(3); // mismo código de operación
 
-            String feedback = null;
+        String message = "REQUEST FEEDBACK";
+        sendDataViaNetwork.sendStrings(message);
 
-            String message = "REQUEST FEEDBACK";
-            sendDataViaNetwork.sendStrings(message);
+        String response = receiveDataViaNetwork.receiveString();
+        System.out.println("response from server : " + response);
 
-            String response = receiveDataViaNetwork.receiveString();
-            System.out.println("response from server : "+response);
-            if(response.equals("OK")){
-                String dateString = Utilities.readString("Please write the date when you sent the medical report (YYYY-MM-DD): ");
-                sendDataViaNetwork.sendStrings(dateString);
+        if (response.equals("OK")) {
 
-                MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
-
-                if(medicalInformation != null){
-                    sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
-                    feedback = medicalInformation.getFeedback();
-                    System.out.println("The feedback from the doctor is:");
-                    System.out.println(feedback);
-                    PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork , socket);
-                }else{
-                    sendDataViaNetwork.sendStrings("ERROR");
-                }
-            }else{
-                System.out.println("Could not fetch the feedback from the server");
+            // 1. Recibir cuántos medical reports hay
+            int count = receiveDataViaNetwork.receiveInt();
+            if (count == 0) {
+                System.out.println("You do not have any medical reports yet.");
+                PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                return;
             }
 
-        }catch (Exception e) {
-            System.out.println("Error in connection");
-            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
-            System.exit(0);
+            // 2. Recibir la lista de fechas
+            List<String> dates = new ArrayList<>();
+            System.out.println("Available medical reports:");
+            for (int i = 0; i < count; i++) {
+                String dateStr = receiveDataViaNetwork.receiveString();
+                dates.add(dateStr);
+                System.out.println((i + 1) + ". " + dateStr);
+            }
+
+            // 3. Elegir uno por índice
+            int choice = Utilities.readInteger("Select a report number to view its feedback (1-" + count + "): ");
+
+            if (choice < 1 || choice > count) {
+                System.out.println("Invalid selection, operation cancelled.");
+                sendDataViaNetwork.sendInt(-1);
+                PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                return;
+            }
+
+            // 4. Enviar la selección al servidor
+            sendDataViaNetwork.sendInt(choice);
+
+            // 5. Recibir el MedicalInformation escogido
+            MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
+
+            if (medicalInformation != null) {
+                sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
+                String feedback = medicalInformation.getFeedback();
+                System.out.println("The feedback from the doctor is:");
+                System.out.println(feedback);
+            } else {
+                sendDataViaNetwork.sendStrings("ERROR");
+                System.out.println("Error: medical information could not be received.");
+            }
+
+            // Volver al menú
+            PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+
+        } else {
+            System.out.println("Could not fetch the feedback from the server");
         }
+
+    } catch (Exception e) {
+        System.out.println("Error in connection");
+        releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
+        System.exit(0);
     }
+}
+
 
 
 
@@ -513,11 +546,310 @@ public class PatientUI {
         }
     }
 
+    public void seeDoctorFeedbackGUI(Patient patient,Socket socket,SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
+        try {
+            // 1. Indicamos al servidor que queremos ver feedback del médico
+            sendDataViaNetwork.sendInt(3); // mismo código que ya usas
 
+            String message = "REQUEST FEEDBACK";
+            sendDataViaNetwork.sendStrings(message);
 
+            String response = receiveDataViaNetwork.receiveString();
+            System.out.println("response from server : " + response);
 
+            if (!"OK".equals(response)) {
+                JOptionPane.showMessageDialog(null,
+                        "Could not fetch the feedback from the server.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
+            // 2. Pedimos la fecha al usuario (formato YYYY-MM-DD)
+            String dateString = JOptionPane.showInputDialog(
+                    null,
+                    "Please write the date when you sent the medical report (YYYY-MM-DD):",
+                    "Report date",
+                    JOptionPane.QUESTION_MESSAGE
+            );
 
+            if (dateString == null || dateString.trim().isEmpty()) {
+                // Usuario canceló o no escribió nada
+                return;
+            }
+
+            dateString = dateString.trim();
+
+            // Comprobación rápida de formato
+            try {
+                Date.valueOf(dateString); // si el formato es incorrecto, saltará IllegalArgumentException
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Invalid date format. Use YYYY-MM-DD.",
+                        "Input error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 3. Enviamos la fecha al servidor
+            sendDataViaNetwork.sendStrings(dateString);
+
+            // 4. Recibimos la MedicalInformation
+            MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
+
+            if (medicalInformation != null) {
+                // Confirmamos recepción al servidor
+                sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
+
+                String feedback = medicalInformation.getFeedback();
+
+                if (feedback == null || feedback.trim().isEmpty()) {
+                    feedback = "No feedback available yet for this report.";
+                }
+
+                // 5. Mostramos el feedback en un JTextArea dentro de un JScrollPane
+                JTextArea textArea = new JTextArea(feedback);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        scrollPane,
+                        "Doctor's feedback",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } else {
+                sendDataViaNetwork.sendStrings("ERROR");
+                JOptionPane.showMessageDialog(null,
+                        "No medical report found for that date.",
+                        "Not found",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error in connection: " + e.getMessage(),
+                    "Connection error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            // Si quieres, aquí puedes llamar a releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
+        }
+    }
+
+    public void changePatientData(Patient patient, Socket socket, ReceiveDataViaNetwork receiveDataViaNetwork, SendDataViaNetwork sendDataViaNetwork) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+
+        // Mostrar las opciones al doctor
+        System.out.println("What information would you like to change?");
+        System.out.println("1 - Name");
+        System.out.println("2 - Surname");
+        System.out.println("3 - Phone");
+        System.out.println("4 - Email");
+        System.out.println("5 - DNI");
+        System.out.println("6 - Sex");
+        System.out.println("7- Insurance");
+        System.out.println("0 - Exit");
+
+        // Leer la opción seleccionada por el doctor
+        int choice = scanner.nextInt();
+        scanner.nextLine();  // Consumir la nueva línea
+
+        // Variables para los nuevos valores
+        String newName = null, newSurname = null,  newEmail = null;
+        String newdni= null, newSex=null;
+        Integer newInsurance = null, newPhone= null; // Usamos Integer para los campos int en caso de que no se ingrese un valor
+
+        // Condicionales para manejar la opción seleccionada
+        switch (choice) {
+            case 1:
+                // Solicitar nuevo nombre
+                System.out.print("Enter new name: ");
+                newName = scanner.nextLine();
+                break;
+            case 2:
+                // Solicitar nuevo apellido
+                System.out.print("Enter new surname: ");
+                newSurname = scanner.nextLine();
+                break;
+            case 3:
+                // Solicitar nuevo teléfono (int)
+                System.out.print("Enter new phone number: ");
+                String newPhoneStr = scanner.nextLine();
+                // Verificar que el seguro sea un número válido
+                try {
+                    newPhone = Integer.parseInt(newPhoneStr);  // Convertir a int
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid insurance number. Please enter a valid number.");
+                    return;  // Salir del método si el número no es válido
+                }
+                break;
+            case 4:
+                // Solicitar nuevo email
+                System.out.print("Enter new email: ");
+                newEmail = scanner.nextLine();
+                break;
+            case 5:
+                System.out.print("Enter new DNI: ");
+                newdni= scanner.nextLine();
+                break;
+            case 6:
+                System.out.print("Enter new Sex: ");
+                newSex= scanner.nextLine();
+                break;
+            case 7:
+                // Solicitar nuevo seguro (int)
+                System.out.print("Enter new insurance number: ");
+                String newInsuranceStr = scanner.nextLine();
+                // Verificar que el seguro sea un número válido
+                try {
+                    newInsurance = Integer.parseInt(newInsuranceStr);  // Convertir a int
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid insurance number. Please enter a valid number.");
+                    return;  // Salir del método si el número no es válido
+                }
+                break;
+            case 0:
+                // Salir
+                System.out.println("Exiting...");
+                return;  // Salir del método
+            default:
+                System.out.println("Invalid choice, please try again.");
+                return;
+        }
+
+        // Enviar el ID del paciente al servidor
+        sendDataViaNetwork.sendInt(patient.getId());  // Enviar el ID del paciente
+
+        // Enviar solo los campos modificados (si no son null)
+        if (newName != null) {
+            sendDataViaNetwork.sendStrings(newName);  // Solo enviar el nuevo nombre si fue modificado
+        } else {
+            sendDataViaNetwork.sendStrings("");  // Enviar una cadena vacía si no se modificó
+        }
+
+        if (newSurname != null) {
+            sendDataViaNetwork.sendStrings(newSurname);  // Solo enviar el nuevo apellido si fue modificado
+        } else {
+            sendDataViaNetwork.sendStrings("");  // Enviar una cadena vacía si no se modificó
+        }
+
+        if (newPhone != null) {
+            sendDataViaNetwork.sendInt(newPhone);  // Solo enviar el nuevo teléfono si fue modificado
+        } else {
+            sendDataViaNetwork.sendInt(-1);  // Enviar una cadena vacía si no se modificó
+        }
+
+        if (newEmail != null) {
+            sendDataViaNetwork.sendStrings(newEmail);  // Solo enviar el nuevo email si fue modificado
+        } else {
+            sendDataViaNetwork.sendStrings("");  // Enviar una cadena vacía si no se modificó
+        }
+        if(newdni != null) {
+            sendDataViaNetwork.sendStrings(newdni);
+        }else{
+            sendDataViaNetwork.sendStrings("");
+        }
+        if(newSex != null) {
+            sendDataViaNetwork.sendStrings(newSex);
+        }else{
+            sendDataViaNetwork.sendStrings("");
+        }
+
+        if (newInsurance != null) {
+            sendDataViaNetwork.sendInt(newInsurance);  // Solo enviar el nuevo seguro si fue modificado
+        } else {
+            sendDataViaNetwork.sendInt(-1);  // Enviar -1 si no se modificó
+        }
+
+        // Recibir la respuesta del servidor
+        String response = receiveDataViaNetwork.receiveString();
+        System.out.println(response);  // Mostrar la respuesta del servidor
+    }
+
+    public String changePatientDataFromGUI(
+            Patient patient,
+            Socket socket,
+            ReceiveDataViaNetwork receiveDataViaNetwork,
+            SendDataViaNetwork sendDataViaNetwork,
+            java.awt.Component parent) throws IOException {
+
+        String[] options = { "Name", "Surname", "Phone", "Email", "DNI", "Sex", "Insurance" };
+        String choice = (String) JOptionPane.showInputDialog(
+                parent,
+                "What information would you like to change?",
+                "Change patient data",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        if (choice == null) return "Operation cancelled";
+
+        String newName = null, newSurname = null, newEmail = null, newDni = null, newSex = null;
+        Integer newPhone = null, newInsurance = null;
+
+        switch (choice) {
+            case "Name":
+                newName = JOptionPane.showInputDialog(parent, "Enter new name:");
+                if (newName == null) return "Operation cancelled";
+                break;
+            case "Surname":
+                newSurname = JOptionPane.showInputDialog(parent, "Enter new surname:");
+                if (newSurname == null) return "Operation cancelled";
+                break;
+            case "Phone":
+                String phoneStr = JOptionPane.showInputDialog(parent, "Enter new phone:");
+                if (phoneStr == null) return "Operation cancelled";
+                try {
+                    newPhone = Integer.parseInt(phoneStr);
+                } catch (NumberFormatException e) {
+                    return "Invalid phone number.";
+                }
+                break;
+            case "Email":
+                newEmail = JOptionPane.showInputDialog(parent, "Enter new email:");
+                if (newEmail == null) return "Operation cancelled";
+                break;
+            case "DNI":
+                newDni = JOptionPane.showInputDialog(parent, "Enter new DNI:");
+                if (newDni == null) return "Operation cancelled";
+                break;
+            case "Sex":
+                newSex = JOptionPane.showInputDialog(parent, "Enter new sex:");
+                if (newSex == null) return "Operation cancelled";
+                break;
+            case "Insurance":
+                String insuranceStr = JOptionPane.showInputDialog(parent, "Enter new insurance:");
+                if (insuranceStr == null) return "Operation cancelled";
+                try {
+                    newInsurance = Integer.parseInt(insuranceStr);
+                } catch (NumberFormatException e) {
+                    return "Invalid insurance number.";
+                }
+                break;
+        }
+
+        // opción 4 en el menú
+        sendDataViaNetwork.sendInt(4);
+        sendDataViaNetwork.sendInt(patient.getId());
+
+        if (newName != null) sendDataViaNetwork.sendStrings(newName); else sendDataViaNetwork.sendStrings("");
+        if (newSurname != null) sendDataViaNetwork.sendStrings(newSurname); else sendDataViaNetwork.sendStrings("");
+        if (newPhone != null) sendDataViaNetwork.sendInt(newPhone); else sendDataViaNetwork.sendInt(-1);
+        if (newEmail != null) sendDataViaNetwork.sendStrings(newEmail); else sendDataViaNetwork.sendStrings("");
+        if (newDni != null) sendDataViaNetwork.sendStrings(newDni); else sendDataViaNetwork.sendStrings("");
+        if (newSex != null) sendDataViaNetwork.sendStrings(newSex); else sendDataViaNetwork.sendStrings("");
+        if (newInsurance != null) sendDataViaNetwork.sendInt(newInsurance); else sendDataViaNetwork.sendInt(-1);
+
+        String response = receiveDataViaNetwork.receiveString();
+        return response;
+    }
 
 
 }
