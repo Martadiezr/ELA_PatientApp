@@ -341,9 +341,40 @@ public class PatientGUI extends JFrame {
             );
 
     }
-    public void onsignalButton() {
 
+
+    private void onsignalButton() {
+        if (context == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You are not connected to the server.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        PatientUI patientUI = context.getPatientUI();
+        Patient loggedInPatient = patientUI.getLoggedInPatient();
+
+        if (loggedInPatient == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You must log in first.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Lo hacemos en un hilo para no bloquear la interfaz mientras graba la señal
+        new Thread(() -> {
+            patientUI.recordAndSendSignalGUI(
+                    loggedInPatient,
+                    context.getSocket(),
+                    context.getSendData(),
+                    context.getReceiveData(),
+                    PatientGUI.this // parent para los diálogos
+            );
+        }).start();
     }
+
     public void onseeFeedback() {
         if (context == null) {
             JOptionPane.showMessageDialog(this,
