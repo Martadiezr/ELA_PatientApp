@@ -513,6 +513,102 @@ public class PatientUI {
         }
     }
 
+    public void seeDoctorFeedbackGUI(Patient patient,Socket socket,SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
+        try {
+            // 1. Indicamos al servidor que queremos ver feedback del médico
+            sendDataViaNetwork.sendInt(3); // mismo código que ya usas
+
+            String message = "REQUEST FEEDBACK";
+            sendDataViaNetwork.sendStrings(message);
+
+            String response = receiveDataViaNetwork.receiveString();
+            System.out.println("response from server : " + response);
+
+            if (!"OK".equals(response)) {
+                JOptionPane.showMessageDialog(null,
+                        "Could not fetch the feedback from the server.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 2. Pedimos la fecha al usuario (formato YYYY-MM-DD)
+            String dateString = JOptionPane.showInputDialog(
+                    null,
+                    "Please write the date when you sent the medical report (YYYY-MM-DD):",
+                    "Report date",
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (dateString == null || dateString.trim().isEmpty()) {
+                // Usuario canceló o no escribió nada
+                return;
+            }
+
+            dateString = dateString.trim();
+
+            // Comprobación rápida de formato
+            try {
+                Date.valueOf(dateString); // si el formato es incorrecto, saltará IllegalArgumentException
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Invalid date format. Use YYYY-MM-DD.",
+                        "Input error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 3. Enviamos la fecha al servidor
+            sendDataViaNetwork.sendStrings(dateString);
+
+            // 4. Recibimos la MedicalInformation
+            MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
+
+            if (medicalInformation != null) {
+                // Confirmamos recepción al servidor
+                sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
+
+                String feedback = medicalInformation.getFeedback();
+
+                if (feedback == null || feedback.trim().isEmpty()) {
+                    feedback = "No feedback available yet for this report.";
+                }
+
+                // 5. Mostramos el feedback en un JTextArea dentro de un JScrollPane
+                JTextArea textArea = new JTextArea(feedback);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        scrollPane,
+                        "Doctor's feedback",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } else {
+                sendDataViaNetwork.sendStrings("ERROR");
+                JOptionPane.showMessageDialog(null,
+                        "No medical report found for that date.",
+                        "Not found",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error in connection: " + e.getMessage(),
+                    "Connection error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            // Si quieres, aquí puedes llamar a releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
+        }
+    }
+
+
 
 
 

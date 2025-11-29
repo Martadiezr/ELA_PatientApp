@@ -281,17 +281,17 @@ public class PatientGUI extends JFrame {
 
         JButton insertMedicalInfoButton = new JButton("Insert medical info");
         JButton signalButton = new JButton("Record signal and send signal");
-        JButton viewSignalButton = new JButton("See feedback");
+        JButton seeFeedbackButton = new JButton("See feedback");
         JButton modifyDataButton = new JButton("Change patient data");
 
         insertMedicalInfoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         signalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        viewSignalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        seeFeedbackButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         modifyDataButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
        signalButton.addActionListener(e -> onsignalButton());
-        // viewSignalButton.addActionListener(e -> onViewSignal());
+        seeFeedbackButton.addActionListener(e -> onseeFeedback());
        // modifyDataButton.addActionListener(e -> onChangePatientData());
 
         panel.add(Box.createVerticalStrut(30));
@@ -301,7 +301,7 @@ public class PatientGUI extends JFrame {
         panel.add(Box.createVerticalStrut(10));
         panel.add(signalButton);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(viewSignalButton);
+        panel.add(seeFeedbackButton);
         panel.add(Box.createVerticalStrut(10));
         panel.add(modifyDataButton);
 
@@ -341,6 +341,32 @@ public class PatientGUI extends JFrame {
 
     }
     public void onsignalButton() {
+
+    }
+    public void onseeFeedback(){
+            if (context == null) {
+                JOptionPane.showMessageDialog(this,
+                        "You are not connected to the server.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            PatientUI patientUI = context.getPatientUI();
+            Patient loggedInPatient= patientUI.getLoggedInPatient();
+
+            if (loggedInPatient == null) {
+                JOptionPane.showMessageDialog(this,
+                        "You must log in first.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Llamamos a la versión GUI del método
+            patientUI.seeDoctorFeedbackGUI(loggedInPatient, context.getSocket(), context.getSendData(), context.getReceiveData()
+            );
+
 
     }
 
