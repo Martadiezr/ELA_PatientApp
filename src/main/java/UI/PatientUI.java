@@ -215,10 +215,7 @@ public class PatientUI {
         }
     }
 
-public void seeDoctorFeedback(Patient patient,
-                              Socket socket,
-                              SendDataViaNetwork sendDataViaNetwork,
-                              ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
     try {
         sendDataViaNetwork.sendInt(3); // mismo código de operación
 
