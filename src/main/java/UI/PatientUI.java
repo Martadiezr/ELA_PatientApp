@@ -215,42 +215,78 @@ public class PatientUI {
         }
     }
 
-    public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-        try{
-            sendDataViaNetwork.sendInt(3); // Indicar al servidor que se va a registrar medical information
+public void seeDoctorFeedback(Patient patient,
+                              Socket socket,
+                              SendDataViaNetwork sendDataViaNetwork,
+                              ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
+    try {
+        sendDataViaNetwork.sendInt(3); // mismo código de operación
 
-            String feedback = null;
+        String message = "REQUEST FEEDBACK";
+        sendDataViaNetwork.sendStrings(message);
 
-            String message = "REQUEST FEEDBACK";
-            sendDataViaNetwork.sendStrings(message);
+        String response = receiveDataViaNetwork.receiveString();
+        System.out.println("response from server : " + response);
 
-            String response = receiveDataViaNetwork.receiveString();
-            System.out.println("response from server : "+response);
-            if(response.equals("OK")){
-                String dateString = Utilities.readString("Please write the date when you sent the medical report (YYYY-MM-DD): ");
-                sendDataViaNetwork.sendStrings(dateString);
+        if (response.equals("OK")) {
 
-                MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
-
-                if(medicalInformation != null){
-                    sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
-                    feedback = medicalInformation.getFeedback();
-                    System.out.println("The feedback from the doctor is:");
-                    System.out.println(feedback);
-                    PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork , socket);
-                }else{
-                    sendDataViaNetwork.sendStrings("ERROR");
-                }
-            }else{
-                System.out.println("Could not fetch the feedback from the server");
+            // 1. Recibir cuántos medical reports hay
+            int count = receiveDataViaNetwork.receiveInt();
+            if (count == 0) {
+                System.out.println("You do not have any medical reports yet.");
+                PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                return;
             }
 
-        }catch (Exception e) {
-            System.out.println("Error in connection");
-            releaseResources(socket, sendDataViaNetwork,receiveDataViaNetwork);
-            System.exit(0);
+            // 2. Recibir la lista de fechas
+            List<String> dates = new ArrayList<>();
+            System.out.println("Available medical reports:");
+            for (int i = 0; i < count; i++) {
+                String dateStr = receiveDataViaNetwork.receiveString();
+                dates.add(dateStr);
+                System.out.println((i + 1) + ". " + dateStr);
+            }
+
+            // 3. Elegir uno por índice
+            int choice = Utilities.readInteger("Select a report number to view its feedback (1-" + count + "): ");
+
+            if (choice < 1 || choice > count) {
+                System.out.println("Invalid selection, operation cancelled.");
+                sendDataViaNetwork.sendInt(-1);
+                PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+                return;
+            }
+
+            // 4. Enviar la selección al servidor
+            sendDataViaNetwork.sendInt(choice);
+
+            // 5. Recibir el MedicalInformation escogido
+            MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
+
+            if (medicalInformation != null) {
+                sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
+                String feedback = medicalInformation.getFeedback();
+                System.out.println("The feedback from the doctor is:");
+                System.out.println(feedback);
+            } else {
+                sendDataViaNetwork.sendStrings("ERROR");
+                System.out.println("Error: medical information could not be received.");
+            }
+
+            // Volver al menú
+            PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
+
+        } else {
+            System.out.println("Could not fetch the feedback from the server");
         }
+
+    } catch (Exception e) {
+        System.out.println("Error in connection");
+        releaseResources(socket, sendDataViaNetwork, receiveDataViaNetwork);
+        System.exit(0);
     }
+}
+
 
 
 
