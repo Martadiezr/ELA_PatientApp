@@ -89,6 +89,7 @@ public class PatientApp {
             System.out.println("1- Insert medical information");
             System.out.println("2- Record & Send signal");
             System.out.println("3- See doctor’s feedback");
+            System.out.println("4- Change personal data");
             System.out.println("0- Exit");
 
             int option = Utilities.readInteger("Choose option: ");
@@ -104,6 +105,9 @@ public class PatientApp {
                 case 3:
                     // Movido del 4 al 3
                     patient.seeDoctorFeedback(patientInServer, socket, sendDataViaNetwork, receiveDataViaNetwork);
+                    break;
+                case 4:
+                    patient.changePatientData(patientInServer,socket,receiveDataViaNetwork,sendDataViaNetwork);
                     break;
                 case 0:
                     running = false;

@@ -293,7 +293,7 @@ public class PatientGUI extends JFrame {
         insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
        signalButton.addActionListener(e -> onsignalButton());
         seeFeedbackButton.addActionListener(e -> onseeFeedback());
-       // modifyDataButton.addActionListener(e -> onChangePatientData());
+       modifyDataButton.addActionListener(e -> onChangePatientData());
 
         panel.add(Box.createVerticalStrut(30));
         panel.add(title);
@@ -369,6 +369,32 @@ public class PatientGUI extends JFrame {
             );
 
 
+    }
+
+    private void onChangePatientData() {
+        if (context == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You are not connected to the server.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        PatientUI patientUI = context.getPatientUI();
+        Patient loggedInPatient= patientUI.getLoggedInPatient();
+
+        try {
+            String result = context.getPatientUI().changePatientDataFromGUI(
+                    loggedInPatient,
+                    context.getSocket(),
+                    context.getReceiveData(),
+                    context.getSendData(),
+                    this
+            );
+            JOptionPane.showMessageDialog(this, result);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error changing patient data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
 }
