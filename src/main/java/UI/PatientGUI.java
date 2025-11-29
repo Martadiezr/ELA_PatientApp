@@ -292,7 +292,7 @@ public class PatientGUI extends JFrame {
 
         insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
        signalButton.addActionListener(e -> onsignalButton());
-        seeFeedbackButton.addActionListener(e -> onseeFeedback());
+       seeFeedbackButton.addActionListener(e -> onseeFeedback());
        modifyDataButton.addActionListener(e -> onChangePatientData());
 
         panel.add(Box.createVerticalStrut(30));
