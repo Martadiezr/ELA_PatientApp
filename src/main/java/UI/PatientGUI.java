@@ -341,35 +341,82 @@ public class PatientGUI extends JFrame {
             );
 
     }
-    public void onsignalButton() {
 
-    }
-    public void onseeFeedback(){
-            if (context == null) {
-                JOptionPane.showMessageDialog(this,
-                        "You are not connected to the server.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
-            PatientUI patientUI = context.getPatientUI();
-            Patient loggedInPatient= patientUI.getLoggedInPatient();
+    private void onsignalButton() {
+        if (context == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You are not connected to the server.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-            if (loggedInPatient == null) {
-                JOptionPane.showMessageDialog(this,
-                        "You must log in first.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        PatientUI patientUI = context.getPatientUI();
+        Patient loggedInPatient = patientUI.getLoggedInPatient();
 
-            // Llamamos a la versión GUI del método
-            patientUI.seeDoctorFeedbackGUI(loggedInPatient, context.getSocket(), context.getSendData(), context.getReceiveData()
+        if (loggedInPatient == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You must log in first.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Lo hacemos en un hilo para no bloquear la interfaz mientras graba la señal
+        new Thread(() -> {
+            patientUI.recordAndSendSignalGUI(
+                    loggedInPatient,
+                    context.getSocket(),
+                    context.getSendData(),
+                    context.getReceiveData(),
+                    PatientGUI.this // parent para los diálogos
             );
-
-
+        }).start();
     }
+
+    public void onseeFeedback() {
+        if (context == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You are not connected to the server.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        PatientUI patientUI = context.getPatientUI();
+        Patient loggedInPatient = patientUI.getLoggedInPatient();
+
+        if (loggedInPatient == null) {
+            JOptionPane.showMessageDialog(this,
+                    "You must log in first.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Ejecutamos la lógica de red en un hilo para no congelar la GUI
+        new Thread(() -> {
+            try {
+                // Este método ya muestra sus propios JOptionPane,
+                // así que aquí no necesitamos hacer nada más.
+                patientUI.seeDoctorFeedbackGUI(
+                        loggedInPatient,
+                        context.getSocket(),
+                        context.getSendData(),
+                        context.getReceiveData()
+                );
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+                        this,
+                        "Error fetching doctor feedback: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                ));
+            }
+        }).start();
+    }
+
 
     private void onChangePatientData() {
         if (context == null) {
