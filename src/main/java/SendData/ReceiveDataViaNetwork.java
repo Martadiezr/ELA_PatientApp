@@ -108,6 +108,8 @@ public class ReceiveDataViaNetwork {
     public MedicalInformation receiveMedicalInformation() {
         MedicalInformation medicalInformation = null;
         try {
+            int id = dataInputStream.readInt();
+
             Date reportDate = Date.valueOf(dataInputStream.readUTF());  // Recibe la fecha del informe
 
             List<Symptom> symptoms = receiveSymptoms();
@@ -117,7 +119,7 @@ public class ReceiveDataViaNetwork {
             String feedback = dataInputStream.readUTF();
 
             // Crea la instancia de MedicalInformation con todos los datos
-            medicalInformation = new MedicalInformation(symptoms, reportDate, medication, feedback);
+            medicalInformation = new MedicalInformation(id, symptoms, reportDate, medication, feedback);
 
         } catch (IOException ex) {
             System.err.println("Error receiving medical information: " + ex.getMessage());
