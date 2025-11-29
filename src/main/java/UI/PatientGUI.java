@@ -200,6 +200,7 @@ public class PatientGUI extends JFrame {
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
+    //show register form
     private void showRegisterForm() {
         JDialog dialog = new JDialog(this, "Register", true);
         dialog.setSize(450, 350);
