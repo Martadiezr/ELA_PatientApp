@@ -96,7 +96,7 @@ public class BITalino {
         try {
             serialPort = SerialPort.getCommPort(portPath);
             serialPort.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-            serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 4000, 0);
+            serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 5000, 0);
 
             if (!serialPort.openPort()) {
                 throw new IOException("Failed to open port: " + portPath);
