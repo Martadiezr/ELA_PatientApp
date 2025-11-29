@@ -49,19 +49,21 @@ public class BitalinoService {
             System.out.println("Connecting to: " + foundPort);
             bitalino.open(foundPort, samplingRate);
 
-            int[] channelsToStart;
+            // --- 3. CONFIGURACIÓN DE CANALES ---
+
+            // ACTIVAMOS TODOS LOS CANALES (0, 1, 2, 3, 4, 5)
+            // Esto es crucial para que el tamaño del paquete sea estable y no falle la lectura.
+            int[] channelsToStart = {0, 1, 2, 3, 4, 5};
+
+            // Determinamos qué canal nos interesa leer (EMG=0, ACC=4)
             int channelIndexToRead;
 
             if (type == TypeSignal.EMG) {
-                // Si es EMG, activamos solo Canal 0 (A1)
-                channelsToStart = new int[]{0};
-                channelIndexToRead = 0;
-                System.out.println("Configured: EMG (channel A1)");
+                channelIndexToRead = 0; // A1
+                System.out.println("Configurado: EMG (Leyendo canal A1 del flujo total)");
             } else {
-                // Si es ACC (u otro), activamos solo Canal 4 (A5)
-                channelsToStart = new int[]{4};
-                channelIndexToRead = 4;
-                System.out.println("Configured: ACC (channel A5)");
+                channelIndexToRead = 4; // A5
+                System.out.println("Configurado: ACC (Leyendo canal A5 del flujo total)");
             }
 
             bitalino.start(channelsToStart);
@@ -72,13 +74,33 @@ public class BitalinoService {
             System.out.println("Recording " + totalSamples + " samples...");
 
             for (int i = 0; i < totalSamples; i++) {
-                Frame[] frames = bitalino.read(1);
+                try {
+                    // Leemos 1 solo frame
+                    Frame[] frames = bitalino.read(1);
 
-                if (frames != null && frames.length > 0) {
-                    int val = frames[0].analog[channelIndexToRead];
-                    signal.addSample(val);
+                    if (frames != null && frames.length > 0) {
+                        // OJO: Si activamos solo 1 canal, a veces el array analog se reduce.
+                        // Usamos una lógica segura para evitar "IndexOutOfBounds"
+                        int val = 0;
+                        if (frames[0].analog.length > channelIndexToRead) {
+                            val = frames[0].analog[channelIndexToRead];
+                        } else {
+                            // Fallback: si el array es corto, cogemos el primero disponible
+                            val = frames[0].analog[0];
+                        }
 
-                    if (i % 50 == 0) System.out.print(".");
+                        signal.addSample(val);
+
+                        // Feedback visual cada 10 muestras
+                        if (i % 10 == 0) System.out.print(".");
+                    }
+                } catch (Exception e) {
+
+                    System.out.println(" [ERROR Muestra " + i + ": " + e.getMessage() + "] ");
+
+                    // Añadimos un pequeño freno para que no inunde la consola
+                    try { Thread.sleep(100); } catch (Exception ignored) {}
+                    signal.addSample(0);
                 }
             }
 
