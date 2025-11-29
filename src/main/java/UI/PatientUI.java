@@ -491,18 +491,17 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
     public void recordAndSendSignal(Patient patient, Socket socket, SendDataViaNetwork sendData, ReceiveDataViaNetwork receiveData) {
         try {
-            // 1. Configuración de la grabación
             System.out.println("--- RECORD NEW SIGNAL ---");
             System.out.println("Select signal type:");
             System.out.println("1. Electromyography (EMG)");
-            System.out.println("2. Accelerometer (ACC)");
+            System.out.println("2. Electrocardiogram (ECG)"); // <--- CAMBIO AQUÍ
             int typeOption = Utilities.readInteger("Option: ");
 
             TypeSignal typeSignal = null;
             if (typeOption == 1) {
                 typeSignal = TypeSignal.EMG;
             } else if (typeOption == 2) {
-                typeSignal = TypeSignal.ACC;
+                typeSignal = TypeSignal.ECG; // <--- CAMBIO AQUÍ
             } else {
                 System.out.println("Invalid option. Cancelling.");
                 return;
@@ -510,36 +509,25 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
             int seconds = Utilities.readInteger("Enter duration in seconds (e.g., 10): ");
 
-            // Opcional: Pedir MAC o dejar vacío para búsqueda automática
             System.out.println("Enter BITalino MAC address (e.g., 20:17:...) or press ENTER to auto-search:");
             String macAddress = Utilities.readString("");
             if (macAddress.trim().isEmpty()) {
-                macAddress = null; // Para que BitalinoService use DeviceDiscoverer
+                macAddress = null;
             }
 
-            // 2. Usar el servicio para adquirir la señal
-            // Instanciamos el servicio con la MAC (o null) y 100 Hz
-            BitalinoService service = new BitalinoService(macAddress, 100);
+            // Instanciamos el servicio
+            BitalinoService service = new BitalinoService( macAddress, 100);
 
             System.out.println("Starting acquisition... Please wait.");
-            // Nota: Aquí pasamos patient.getId(). Asegúrate de que el objeto Patient tenga el ID cargado tras el login.
-            // Si tu POJO Patient no tiene getId(), tendrás que añadirlo o gestionarlo.
-            // Asumo que tu Patient tiene un método getId() o similar.
-            int patientId = 0;
-            // patientId = patient.getId(); // DESCOMENTAR SI TU CLASE PATIENT TIENE ID
-            // Si no tiene ID en memoria, usa un valor temporal o arréglalo en el login.
+            // Usamos el ID del paciente si está disponible
+            int patientId = (patient != null) ? patient.getId() : 0;
 
             Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
 
             System.out.println("Signal acquired! Samples recorded: " + signal.getValues().size());
-
-            // 3. Enviar al servidor
             System.out.println("Sending to server...");
 
-            // Enviamos el código de operación para "Enviar Señal" (asumimos que es el 3 en tu menú del servidor)
-            sendData.sendInt(2);
-
-            // Usamos el método que creamos en SendDataViaNetwork
+            sendData.sendInt(2); // Opción 2: Enviar señal
             sendData.sendSignal(signal);
 
             System.out.println("Signal sent successfully!");
@@ -892,7 +880,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                                        ReceiveDataViaNetwork receiveData,
                                        Component parent) {
         try {
-            String[] options = { "Electromyography (EMG)", "Accelerometer (ACC)" };
+            String[] options = { "Electromyography (EMG)", "Electrocardiogram (ECG)" };
             int typeOption = JOptionPane.showOptionDialog(
                     parent,
                     "Select signal type:",
@@ -908,7 +896,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            TypeSignal typeSignal = (typeOption == 0) ? TypeSignal.EMG : TypeSignal.ACC;
+            TypeSignal typeSignal = (typeOption == 0) ? TypeSignal.EMG : TypeSignal.ECG;
 
             String secondsStr = JOptionPane.showInputDialog(
                     parent,

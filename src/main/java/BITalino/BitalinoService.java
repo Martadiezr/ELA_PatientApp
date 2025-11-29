@@ -62,8 +62,8 @@ public class BitalinoService {
                 channelIndexToRead = 0; // A1
                 System.out.println("Configurado: EMG (Leyendo canal A1 del flujo total)");
             } else {
-                channelIndexToRead = 4; // A5
-                System.out.println("Configurado: ACC (Leyendo canal A5 del flujo total)");
+                channelIndexToRead = 1;
+                System.out.println("Configurado: ECG (Leyendo canal A2/1)");
             }
 
             bitalino.start(channelsToStart);
