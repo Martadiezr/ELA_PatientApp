@@ -4,8 +4,6 @@ import pojos.Patient;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class PatientGUI extends JFrame {
@@ -24,21 +22,29 @@ public class PatientGUI extends JFrame {
     // Componentes de connectPanel
     private JTextField ipField;
 
-    // Componentes de selectPatient
+    // Componentes de selectPatient (aunque ahora no los uses aquí)
     private JTextArea patientListArea;
     private JTextField patientIdField;
 
     // Estado
     private Integer currentPatientId = null;
+
+    // Colores / estética
+    private static final Color BG_COLOR = new Color(238, 244, 255);
+    private static final Color CARD_COLOR = Color.WHITE;
+    private static final Color BORDER_COLOR = new Color(210, 220, 240);
+    private static final Color TEXT_DARK = new Color(30, 30, 30);
+
     public PatientGUI() {
-        super("Telemedicine - Doctor");
-        // Nota: Ya no pedimos el 'context' en el constructor
+        super("Telemedicine - Patient");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 400);
+        setSize(900, 600);                 // Ventana principal más grande
+        setMinimumSize(new Dimension(900, 600));
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
+        mainPanel.setBackground(BG_COLOR);
 
         // 1. Crear los paneles
         connectPanel = createConnectPanel(); // <--- Creamos el panel de conexión
@@ -60,45 +66,56 @@ public class PatientGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            // Ya no conectamos aquí, solo lanzamos la interfaz
-            new PatientGUI();
-        });
+        SwingUtilities.invokeLater(PatientGUI::new);
     }
 
-// ===================== PANTALLA 0: CONEXIÓN AL SERVIDOR =====================
+    // ===================== PANTALLA 0: CONEXIÓN AL SERVIDOR =====================
 
     private JPanel createConnectPanel() {
+        JPanel background = new JPanel(new GridBagLayout());
+        background.setBackground(BG_COLOR);
+
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(CARD_COLOR);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        panel.setPreferredSize(new Dimension(380, 300)); // tarjeta más grande
 
         JLabel title = new JLabel("Welcome to Telemedicine");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setFont(new Font("Arial", Font.BOLD, 22));
+        title.setForeground(TEXT_DARK);
 
         JLabel ipLabel = new JLabel("Enter Server IP Address:");
         ipLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Campo de texto con "localhost" por defecto
         ipField = new JTextField("localhost");
-        ipField.setMaximumSize(new Dimension(200, 30));
+        ipField.setMaximumSize(new Dimension(250, 30));
         ipField.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton connectButton = new JButton("Connect");
         connectButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        connectButton.setFocusPainted(false);
+        connectButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         connectButton.addActionListener(e -> attemptConnection());
 
-        panel.add(Box.createVerticalStrut(50));
+        panel.add(Box.createVerticalStrut(10));
         panel.add(title);
-        panel.add(Box.createVerticalStrut(40));
+        panel.add(Box.createVerticalStrut(25));
         panel.add(ipLabel);
         panel.add(Box.createVerticalStrut(10));
         panel.add(ipField);
         panel.add(Box.createVerticalStrut(20));
         panel.add(connectButton);
+        panel.add(Box.createVerticalStrut(10));
 
-        return panel;
+        background.add(panel);
+        return background;
     }
 
     private void attemptConnection() {
@@ -110,7 +127,6 @@ public class PatientGUI extends JFrame {
 
         try {
             // Intentamos conectar creando el contexto
-            // Asumimos puerto 8888 fijo, pero podrías poner otro campo para el puerto
             this.context = new PatientClientContext(ip, 8888);
 
             // Si no da error, pasamos a la siguiente pantalla
@@ -125,48 +141,95 @@ public class PatientGUI extends JFrame {
         }
     }
 
+    // ===================== PANTALLA 1: LOGIN / REGISTER =====================
+
     private JPanel createAuthPanel() {
+        JPanel background = new JPanel(new GridBagLayout());
+        background.setBackground(BG_COLOR);
+
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(CARD_COLOR);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        panel.setPreferredSize(new Dimension(380, 300)); // tarjeta blanca más grande
 
-        JLabel title = new JLabel("Doctor Login");
+        JLabel title = new JLabel("Patient Login");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setFont(new Font("Arial", Font.BOLD, 22));
+        title.setForeground(TEXT_DARK);
 
         JButton loginButton = new JButton("Log in");
         JButton registerButton = new JButton("Register");
 
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Ambos con el mismo estilo neutro (no azul)
+        for (JButton b : new JButton[]{loginButton, registerButton}) {
+            b.setAlignmentX(Component.CENTER_ALIGNMENT);
+            b.setFocusPainted(false);
+            b.setBackground(new Color(245, 248, 255));
+            b.setForeground(TEXT_DARK);
+            b.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(BORDER_COLOR),
+                    BorderFactory.createEmptyBorder(8, 18, 8, 18)
+            ));
+            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
 
         loginButton.addActionListener(e -> showLoginForm());
-       registerButton.addActionListener(e -> showRegisterForm());
+        registerButton.addActionListener(e -> showRegisterForm());
 
-        panel.add(Box.createVerticalStrut(40));
+        panel.add(Box.createVerticalStrut(20));
         panel.add(title);
-        panel.add(Box.createVerticalStrut(40));
+        panel.add(Box.createVerticalStrut(25));
         panel.add(loginButton);
         panel.add(Box.createVerticalStrut(10));
         panel.add(registerButton);
+        panel.add(Box.createVerticalStrut(15));
 
-        return panel;
+        background.add(panel);
+        return background;
     }
+
     private void showLoginForm() {
         JDialog dialog = new JDialog(this, "Log in", true);
-        dialog.setSize(400, 200);
-        dialog.setLayout(new GridLayout(3, 2));
+        dialog.setLayout(new GridBagLayout());
+        dialog.getContentPane().setBackground(CARD_COLOR);
 
-        JTextField emailField = new JTextField();
-        JPasswordField passwordField = new JPasswordField();
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(CARD_COLOR);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 8, 4, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        dialog.add(new JLabel("Email:"));
-        dialog.add(emailField);
-        dialog.add(new JLabel("Password:"));
-        dialog.add(passwordField);
+        JTextField emailField = new JTextField(18);
+        JPasswordField passwordField = new JPasswordField(18);
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        content.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        content.add(emailField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        content.add(new JLabel("Password:"), gbc);
+        gbc.gridx = 1;
+        content.add(passwordField, gbc);
 
         JButton loginBtn = new JButton("Log in");
-        dialog.add(new JLabel());
-        dialog.add(loginBtn);
+        loginBtn.setFocusPainted(false);
+        loginBtn.setBackground(new Color(245, 248, 255));
+        loginBtn.setForeground(TEXT_DARK);
+        loginBtn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(6, 16, 6, 16)
+        ));
+        loginBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        content.add(loginBtn, gbc);
 
         loginBtn.addActionListener(ev -> {
             String email = emailField.getText();
@@ -197,38 +260,103 @@ public class PatientGUI extends JFrame {
             }
         });
 
+        dialog.getContentPane().add(content);
+        dialog.pack(); // cuadro más pequeño / fino
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
+
     //show register form
     private void showRegisterForm() {
         JDialog dialog = new JDialog(this, "Register", true);
-        dialog.setSize(450, 350);
-        dialog.setLayout(new GridLayout(8, 2));
+        dialog.setLayout(new GridBagLayout());
+        dialog.getContentPane().setBackground(CARD_COLOR);
 
-        JTextField nameField = new JTextField();
-        JTextField surnameField = new JTextField();
-        JTextField dniField = new JTextField();
-        JTextField dobField = new JTextField();  // YYYY-MM-DD
-        JTextField sexField = new JTextField();
-        JTextField phoneField = new JTextField();
-        JTextField insuranceField = new JTextField();
-        JTextField emailField = new JTextField();
-        JPasswordField passwordField = new JPasswordField();
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(CARD_COLOR);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(3, 8, 3, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        dialog.add(new JLabel("Name:")); dialog.add(nameField);
-        dialog.add(new JLabel("Surname:")); dialog.add(surnameField);
-        dialog.add(new JLabel("DNI:")); dialog.add(dniField);
-        dialog.add(new JLabel("Birth date (YYYY-MM-DD):")); dialog.add(dobField);
-        dialog.add(new JLabel("Sex (M/F):")); dialog.add(sexField);
-        dialog.add(new JLabel("Phone:")); dialog.add(phoneField);
-        dialog.add(new JLabel("Insurance:")); dialog.add(insuranceField);
-        dialog.add(new JLabel("Email:")); dialog.add(emailField);
-        dialog.add(new JLabel("Password:")); dialog.add(passwordField);
+        JTextField nameField = new JTextField(15);
+        JTextField surnameField = new JTextField(15);
+        JTextField dniField = new JTextField(15);
+        JTextField dobField = new JTextField(15);  // YYYY-MM-DD
+        JTextField sexField = new JTextField(5);
+        JTextField phoneField = new JTextField(10);
+        JTextField insuranceField = new JTextField(10);
+        JTextField emailField = new JTextField(18);
+        JPasswordField passwordField = new JPasswordField(18);
+
+        int row = 0;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1;
+        content.add(nameField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Surname:"), gbc);
+        gbc.gridx = 1;
+        content.add(surnameField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("DNI:"), gbc);
+        gbc.gridx = 1;
+        content.add(dniField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Birth date (YYYY-MM-DD):"), gbc);
+        gbc.gridx = 1;
+        content.add(dobField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Sex (M/F):"), gbc);
+        gbc.gridx = 1;
+        content.add(sexField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Phone:"), gbc);
+        gbc.gridx = 1;
+        content.add(phoneField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Insurance:"), gbc);
+        gbc.gridx = 1;
+        content.add(insuranceField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        content.add(emailField, gbc);
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        content.add(new JLabel("Password:"), gbc);
+        gbc.gridx = 1;
+        content.add(passwordField, gbc);
 
         JButton registerBtn = new JButton("Register");
-        dialog.add(new JLabel());
-        dialog.add(registerBtn);
+        registerBtn.setFocusPainted(false);
+        registerBtn.setBackground(new Color(245, 248, 255));
+        registerBtn.setForeground(TEXT_DARK);
+        registerBtn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(6, 16, 6, 16)
+        ));
+        registerBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        content.add(registerBtn, gbc);
 
         registerBtn.addActionListener(ev -> {
             try {
@@ -265,6 +393,8 @@ public class PatientGUI extends JFrame {
             }
         });
 
+        dialog.getContentPane().add(content);
+        dialog.pack(); // más fino y compacto
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -273,43 +403,64 @@ public class PatientGUI extends JFrame {
     //===================== PANTALLA 3: MENU 4 OPCIONES =====================
 
     private JPanel createMenuPanel() {
+        JPanel background = new JPanel(new GridBagLayout());
+        background.setBackground(BG_COLOR);
+
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(CARD_COLOR);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        panel.setPreferredSize(new Dimension(380, 320));
 
         JLabel title = new JLabel("Patient Menu");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.setFont(new Font("Arial", Font.BOLD, 18));
+        title.setForeground(TEXT_DARK);
 
         JButton insertMedicalInfoButton = new JButton("Insert medical info");
         JButton signalButton = new JButton("Record signal and send signal");
         JButton seeFeedbackButton = new JButton("See feedback");
         JButton modifyDataButton = new JButton("Change patient data");
 
-        insertMedicalInfoButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        signalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        seeFeedbackButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        modifyDataButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        for (JButton b : new JButton[]{insertMedicalInfoButton, signalButton, seeFeedbackButton, modifyDataButton}) {
+            b.setAlignmentX(Component.CENTER_ALIGNMENT);
+            b.setFocusPainted(false);
+            b.setBackground(new Color(245, 248, 255));
+            b.setForeground(TEXT_DARK);
+            b.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(BORDER_COLOR),
+                    BorderFactory.createEmptyBorder(8, 18, 8, 18)
+            ));
+            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
 
         insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
-       signalButton.addActionListener(e -> onsignalButton());
-       seeFeedbackButton.addActionListener(e -> onseeFeedback());
-       modifyDataButton.addActionListener(e -> onChangePatientData());
+        signalButton.addActionListener(e -> onsignalButton());
+        seeFeedbackButton.addActionListener(e -> onseeFeedback());
+        modifyDataButton.addActionListener(e -> onChangePatientData());
 
-        panel.add(Box.createVerticalStrut(30));
+        panel.add(Box.createVerticalStrut(15));
         panel.add(title);
-        panel.add(Box.createVerticalStrut(30));
+        panel.add(Box.createVerticalStrut(20));
         panel.add(insertMedicalInfoButton);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(12));
         panel.add(signalButton);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(12));
         panel.add(seeFeedbackButton);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(12));
         panel.add(modifyDataButton);
+        panel.add(Box.createVerticalStrut(10));
 
-        return panel;
+        background.add(panel);
+        return background;
     }
+
+    // ===================== MÉTODOS DE BOTONES (SIN CAMBIOS DE LÓGICA) =====================
+
     public void oninsertMedicalInfoButton() {
-        // 1. Comprobamos que hay contexto (estás conectado al servidor)
         if (context == null) {
             JOptionPane.showMessageDialog(this,
                     "You are not connected to the server.",
@@ -318,12 +469,9 @@ public class PatientGUI extends JFrame {
             return;
         }
 
-        // 2. Conseguimos el PatientUI del contexto
         PatientUI patientUI = context.getPatientUI();
         Patient loggedInPatient = patientUI.getLoggedInPatient();
 
-        // 3. Obtenemos el paciente logueado
-       // pojos.Patient loggedInPatient = patientUI.getLoggedInPatient();
         if (loggedInPatient == null) {
             JOptionPane.showMessageDialog(this,
                     "You must log in first.",
@@ -332,14 +480,12 @@ public class PatientGUI extends JFrame {
             return;
         }
 
-        // 4. Llamamos al método que envía la información médica (versión GUI)
-            patientUI.insertMedicalInformationGUI(
-                    loggedInPatient,
-                    context.getSocket(),
-                    context.getSendData(),
-                    context.getReceiveData()
-            );
-
+        patientUI.insertMedicalInformationGUI(
+                loggedInPatient,
+                context.getSocket(),
+                context.getSendData(),
+                context.getReceiveData()
+        );
     }
 
 
@@ -363,14 +509,13 @@ public class PatientGUI extends JFrame {
             return;
         }
 
-        // Lo hacemos en un hilo para no bloquear la interfaz mientras graba la señal
         new Thread(() -> {
             patientUI.recordAndSendSignalGUI(
                     loggedInPatient,
                     context.getSocket(),
                     context.getSendData(),
                     context.getReceiveData(),
-                    PatientGUI.this // parent para los diálogos
+                    PatientGUI.this
             );
         }).start();
     }
@@ -395,11 +540,8 @@ public class PatientGUI extends JFrame {
             return;
         }
 
-        // Ejecutamos la lógica de red en un hilo para no congelar la GUI
         new Thread(() -> {
             try {
-                // Este método ya muestra sus propios JOptionPane,
-                // así que aquí no necesitamos hacer nada más.
                 patientUI.seeDoctorFeedbackGUI(
                         loggedInPatient,
                         context.getSocket(),
@@ -428,7 +570,7 @@ public class PatientGUI extends JFrame {
         }
 
         PatientUI patientUI = context.getPatientUI();
-        Patient loggedInPatient= patientUI.getLoggedInPatient();
+        Patient loggedInPatient = patientUI.getLoggedInPatient();
 
         try {
             String result = context.getPatientUI().changePatientDataFromGUI(
