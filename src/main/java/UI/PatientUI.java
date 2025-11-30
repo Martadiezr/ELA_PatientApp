@@ -11,24 +11,31 @@ import java.awt.Frame;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.Date;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.*;
-import java.awt.*;
 
+
+/**
+ * Handles the business logic and network communication for the Patient side.
+ * Contains methods for registration, login, data insertion, signal recording, and feedback retrieval.
+ */
 public class PatientUI {
+    // Holds the Patient object after a successful login
     private Patient loggedInPatient;
-    private Patient registerPatient;
 
+    /**
+     * Console-based method for patient registration.
+     * @param socket The network socket.
+     * @param sendDataViaNetwork The data sender.
+     * @param receiveDataViaNetwork The data receiver.
+     * @throws IOException If a network error occurs.
+     */
     public void register(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
-        // Crear un objeto Patient y obtener los datos del paciente
         try {
-            sendDataViaNetwork.sendInt(2); // Indicar al servidor que se va a registrar un paciente
+            sendDataViaNetwork.sendInt(2); // Signal the server that registration is about to start
 
             Patient patient = new Patient();
             Role role = new Role("Patient");
@@ -59,18 +66,22 @@ public class PatientUI {
             patient.setInsurance(insurance);
 
             String password = Utilities.readString("Enter your password: ");
-            byte[] passwordBytes = password.getBytes(); // Convertir la contraseña a bytes
+            byte[] passwordBytes = password.getBytes();
+
 
             if (passwordBytes != null) {
                 sendDataViaNetwork.sendStrings("OK");
                 User user = new User(email, passwordBytes, role);
                 System.out.println(patient);
                 System.out.println(user);
+                // 1. Send patient details
                 sendDataViaNetwork.sendPatient(patient);
+                // 2. Send user/login details
                 sendDataViaNetwork.sendUser(user);
-
+                // Wait for server response
                 if(receiveDataViaNetwork.receiveString().equals("SUCCESS")){
                     System.out.println("Patient registered successfully.");
+                    // Move to the patient menu (assuming PatientApp.menuPaciente exists)
                     PatientApp.menuPaciente(patient, sendDataViaNetwork, receiveDataViaNetwork, socket);
                 } else {
                     System.out.println("Registration failed. Please try again.");
@@ -88,6 +99,10 @@ public class PatientUI {
     }
 
 
+    /**
+     * Console-based method for patient login.
+     * @throws IOException If a network error occurs.
+     */
     public void logIn(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         try {
             sendDataViaNetwork.sendInt(1);
@@ -106,7 +121,7 @@ public class PatientUI {
                 User user = new User(username, passwordBytes, role);
                 sendDataViaNetwork.sendUser(user);
                 String response = receiveDataViaNetwork.receiveString();
-                System.out.println(response);
+                System.out.println(response); // "SUCCESS" or "ERROR"
 
                 if(response.equals("SUCCESS")) {
                     try{
@@ -139,7 +154,7 @@ public class PatientUI {
         }
     }
 
-
+    /** Helper method to close streams and the socket. */
     private static void releaseResources(Socket socket,SendDataViaNetwork sendDataViaNetwork,ReceiveDataViaNetwork receiveDataViaNetwork){
         if(sendDataViaNetwork != null && receiveDataViaNetwork != null) {
             sendDataViaNetwork.releaseResources();
@@ -154,19 +169,23 @@ public class PatientUI {
         }
     }
 
+    /**
+     * Console-based method to insert medical information (symptoms and medication).
+     * @throws IOException If a network error occurs.
+     */
     public void insertMedicalInformation(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
         try {
-            sendDataViaNetwork.sendInt(1); // Indicar al servidor que se va a registrar medical information
-            //opcion 1 en menuPaciente
+            sendDataViaNetwork.sendInt(1); // Operation code: Register medical information
 
             MedicalInformation medicalInformation = new MedicalInformation();
 
             Date dateReport = Date.valueOf(java.time.LocalDate.now());
             medicalInformation.setReportDate(dateReport);
-            // Ingresar síntomas
+            // 1. Request available symptoms from the server
             sendDataViaNetwork.sendStrings("SEND SYMPTOMS");
             String message = receiveDataViaNetwork.receiveString();
             if(message.equals("OK")){
+                // 2. Receive the list of all available symptoms
                 List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
                 List<Symptom> symptomsOfPatient = new ArrayList<>();
                 System.out.println("Please select your symptoms");
@@ -219,9 +238,13 @@ public class PatientUI {
         }
     }
 
+    /**
+     * Console-based method to see doctor's feedback on a selected report.
+     * @throws IOException If a network error occurs.
+     */
 public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) throws IOException {
     try {
-        sendDataViaNetwork.sendInt(3); // mismo código de operación
+        sendDataViaNetwork.sendInt(3); // Operation code: Request feedback
 
         String message = "REQUEST FEEDBACK";
         sendDataViaNetwork.sendStrings(message);
@@ -231,7 +254,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
         if (response.equals("OK")) {
 
-            // 1. Recibir cuántos medical reports hay
+            // 1. Receive number of reports
             int count = receiveDataViaNetwork.receiveInt();
             if (count == 0) {
                 System.out.println("You do not have any medical reports yet.");
@@ -239,7 +262,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 2. Recibir la lista de fechas
+            // 2. Receive the list of report dates (Strings)
             List<String> dates = new ArrayList<>();
             System.out.println("Available medical reports:");
             for (int i = 0; i < count; i++) {
@@ -248,7 +271,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 System.out.println((i + 1) + ". " + dateStr);
             }
 
-            // 3. Elegir uno por índice
+            // 3. Console-based selection of report index
             int choice = Utilities.readInteger("Select a report number to view its feedback (1-" + count + "): ");
 
             if (choice < 1 || choice > count) {
@@ -258,10 +281,10 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 4. Enviar la selección al servidor
+            // 4. Send the selection (1-based index) to the server
             sendDataViaNetwork.sendInt(choice);
 
-            // 5. Recibir el MedicalInformation escogido
+            // 5. Receive the selected MedicalInformation object
             MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
 
             if (medicalInformation != null) {
@@ -295,6 +318,11 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         return loggedInPatient;
     }
 
+    /**
+     * GUI-based logic for patient login.
+     * @return true if login succeeds, false otherwise.
+     * @throws IOException If a network error occurs.
+     */
     public boolean logInFromGUI(
             String username,
             String password,
@@ -307,18 +335,20 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         String serverMsg = receiveDataViaNetwork.receiveString();
         System.out.println("Server says: " + serverMsg);
 
+        // Prepare User object
         byte[] passwordBytes = password.getBytes();
         Role role = new Role("Patient");
         User user = new User(username, passwordBytes, role);
 
         sendDataViaNetwork.sendStrings("OK");
-        sendDataViaNetwork.sendUser(user);
+        sendDataViaNetwork.sendUser(user); // Send login credentials
 
         String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
         if (!"SUCCESS".equals(response)) {
             return false;
         }
 
+        // Receive Patient object and set the loggedInPatient field
         Patient patient = receiveDataViaNetwork.recievePatient();
         System.out.println("Patient logged in: " + patient);
 
@@ -331,6 +361,11 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         }
     }
 
+    /**
+     * GUI-based logic for patient registration.
+     * @return true if registration succeeds, false otherwise.
+     * @throws IOException If a network error occurs.
+     */
     public boolean registerFromGUI(
             String name,
             String surname,
@@ -347,6 +382,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
         sendDataViaNetwork.sendInt(2); // registrar doctor
 
+        // Create and populate Patient and User objects
         Patient patient = new Patient();
         patient.setName(name);
         patient.setSurname(surname);
@@ -368,18 +404,20 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         String response = receiveDataViaNetwork.receiveString(); // "SUCCESS" o "ERROR"
         return response.equals("SUCCESS");
     }
-    // Versión pensada para estar dentro de PatientGUI (por ejemplo)
-// Si está en otra clase, cambia "this" por un parámetro Component parent
+
+    /**
+     * GUI-based method to insert medical information (symptoms and medication) using JOptionPane.
+     */
    public void insertMedicalInformationGUI(Patient patient, Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
         try {
-            // 1. Indicamos al servidor que vamos a registrar medical information
+            // 1. Request and receive list of all available symptoms
             sendDataViaNetwork.sendInt(1);
 
             MedicalInformation medicalInformation = new MedicalInformation();
             Date dateReport = Date.valueOf(java.time.LocalDate.now());
             medicalInformation.setReportDate(dateReport);
 
-            // 2. Pedimos síntomas al servidor
+            // 2. Show JList for multi-selection of symptoms
             sendDataViaNetwork.sendStrings("SEND SYMPTOMS");
             String message = receiveDataViaNetwork.receiveString();
 
@@ -391,7 +429,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 3. Recibimos lista de síntomas
+            // 3. Process selected symptoms
             List<Symptom> symptoms = receiveDataViaNetwork.receiveSymptoms();
             if (symptoms == null || symptoms.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
@@ -401,7 +439,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 4. Mostramos lista de síntomas en un JList multiselección
+            // 4. Request medication input via JOptionPane
             String[] symptomNames = new String[symptoms.size()];
             for (int i = 0; i < symptoms.size(); i++) {
                 symptomNames[i] = (i + 1) + " - " + symptoms.get(i).getDescription(); // o toString()
@@ -438,8 +476,8 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 symptomsOfPatient.add(symptoms.get(idx));
             }
 
-            // 5. Pedimos medicación en un input (separada por comas)
-            String medsInput = JOptionPane.showInputDialog(
+                    // 5. Process medication input (split by comma)
+                    String medsInput = JOptionPane.showInputDialog(
                     null,
                     "Insert the medication you have been using recently,\n" +
                             "separated by commas. Leave empty if you are not medicated:",
@@ -458,7 +496,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 }
             }
 
-            // 6. Enviamos la información médica
+            // 6. Send the medical information to the server
             medicalInformation.setSymptoms(symptomsOfPatient);
             medicalInformation.setMedication(medicaments);
 
@@ -489,19 +527,22 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
     }
 
 
+    /**
+     * Console-based method to record and send a signal using BITalino service.
+     */
     public void recordAndSendSignal(Patient patient, Socket socket, SendDataViaNetwork sendData, ReceiveDataViaNetwork receiveData) {
         try {
             System.out.println("--- RECORD NEW SIGNAL ---");
             System.out.println("Select signal type:");
             System.out.println("1. Electromyography (EMG)");
-            System.out.println("2. Electrocardiogram (ECG)"); // <--- CAMBIO AQUÍ
+            System.out.println("2. Electrocardiogram (ECG)");
             int typeOption = Utilities.readInteger("Option: ");
 
             TypeSignal typeSignal = null;
             if (typeOption == 1) {
                 typeSignal = TypeSignal.EMG;
             } else if (typeOption == 2) {
-                typeSignal = TypeSignal.ECG; // <--- CAMBIO AQUÍ
+                typeSignal = TypeSignal.ECG;
             } else {
                 System.out.println("Invalid option. Cancelling.");
                 return;
@@ -538,6 +579,9 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         }
     }
 
+    /**
+     * GUI-based method to see doctor's feedback, showing selection via JOptionPane.
+     */
     public void seeDoctorFeedbackGUI(Patient patient,
                                      Socket socket,
                                      SendDataViaNetwork sendDataViaNetwork,
@@ -560,7 +604,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 2. Recibir cuántos medical reports hay
+            // 2. Receive number of reports and the list of report lines
             int count = receiveDataViaNetwork.receiveInt();
             if (count == 0) {
                 JOptionPane.showMessageDialog(null,
@@ -570,14 +614,14 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 3. Recibir las líneas tipo "fecha | Symptoms: ..."
+            // 3. Show selection dialog
             List<String> reportLines = new ArrayList<>();
             for (int i = 0; i < count; i++) {
                 String line = receiveDataViaNetwork.receiveString();
                 reportLines.add(line);
             }
 
-            // 4. Mostrar un diálogo para que el paciente elija el informe
+            // 4. Send the selection (1-based index)
             String[] options = reportLines.toArray(new String[0]);
 
             int choice = JOptionPane.showOptionDialog(
@@ -600,7 +644,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             // El servidor espera índice 1..count
             sendDataViaNetwork.sendInt(choice + 1);
 
-            // 5. Recibimos el MedicalInformation seleccionado
+            // 5. Receive the selected MedicalInformation object
             MedicalInformation medicalInformation = receiveDataViaNetwork.receiveMedicalInformation();
 
             if (medicalInformation == null) {
@@ -615,7 +659,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             // Confirmamos recepción al servidor
             sendDataViaNetwork.sendStrings("RECEIVED MEDICAL INFORMATION");
 
-            // 6. Construimos un texto bonito con fecha + síntomas + feedback
             StringBuilder sb = new StringBuilder();
             sb.append("==== DOCTOR FEEDBACK ====\n\n");
             sb.append("Report date: ").append(medicalInformation.getReportDate()).append("\n\n");
@@ -640,7 +683,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             sb.append(feedback);
             sb.append("\n\n==========================\n");
 
-            // 7. Mostramos el resultado en un JTextArea
             JTextArea textArea = new JTextArea(sb.toString());
             textArea.setEditable(false);
             textArea.setLineWrap(true);
@@ -665,6 +707,10 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         }
     }
 
+    /**
+     * Console-based method to change patient data.
+     * Allows selection of a single field to modify.
+     */
     public void changePatientData(Patient patient, Socket socket, ReceiveDataViaNetwork receiveDataViaNetwork, SendDataViaNetwork sendDataViaNetwork) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
@@ -681,39 +727,33 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
         // Leer la opción seleccionada por el doctor
         int choice = scanner.nextInt();
-        scanner.nextLine();  // Consumir la nueva línea
+        scanner.nextLine();
 
         // Variables para los nuevos valores
         String newName = null, newSurname = null,  newEmail = null;
         String newdni= null, newSex=null;
-        Integer newInsurance = null, newPhone= null; // Usamos Integer para los campos int en caso de que no se ingrese un valor
+        Integer newInsurance = null, newPhone= null;
 
-        // Condicionales para manejar la opción seleccionada
         switch (choice) {
             case 1:
-                // Solicitar nuevo nombre
                 System.out.print("Enter new name: ");
                 newName = scanner.nextLine();
                 break;
             case 2:
-                // Solicitar nuevo apellido
                 System.out.print("Enter new surname: ");
                 newSurname = scanner.nextLine();
                 break;
             case 3:
-                // Solicitar nuevo teléfono (int)
                 System.out.print("Enter new phone number: ");
                 String newPhoneStr = scanner.nextLine();
-                // Verificar que el seguro sea un número válido
                 try {
-                    newPhone = Integer.parseInt(newPhoneStr);  // Convertir a int
+                    newPhone = Integer.parseInt(newPhoneStr);
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid insurance number. Please enter a valid number.");
-                    return;  // Salir del método si el número no es válido
+                    return;
                 }
                 break;
             case 4:
-                // Solicitar nuevo email
                 System.out.print("Enter new email: ");
                 newEmail = scanner.nextLine();
                 break;
@@ -726,40 +766,35 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 newSex= scanner.nextLine();
                 break;
             case 7:
-                // Solicitar nuevo seguro (int)
                 System.out.print("Enter new insurance number: ");
                 String newInsuranceStr = scanner.nextLine();
-                // Verificar que el seguro sea un número válido
                 try {
-                    newInsurance = Integer.parseInt(newInsuranceStr);  // Convertir a int
+                    newInsurance = Integer.parseInt(newInsuranceStr);
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid insurance number. Please enter a valid number.");
-                    return;  // Salir del método si el número no es válido
+                    return;
                 }
                 break;
             case 0:
-                // Salir
                 System.out.println("Exiting...");
-                return;  // Salir del método
+                return;
             default:
                 System.out.println("Invalid choice, please try again.");
                 return;
         }
 
-        // Enviar el ID del paciente al servidor
-        sendDataViaNetwork.sendInt(patient.getId());  // Enviar el ID del paciente
+        sendDataViaNetwork.sendInt(patient.getId());
 
-        // Enviar solo los campos modificados (si no son null)
         if (newName != null) {
-            sendDataViaNetwork.sendStrings(newName);  // Solo enviar el nuevo nombre si fue modificado
+            sendDataViaNetwork.sendStrings(newName);
         } else {
-            sendDataViaNetwork.sendStrings("");  // Enviar una cadena vacía si no se modificó
+            sendDataViaNetwork.sendStrings("");
         }
 
         if (newSurname != null) {
-            sendDataViaNetwork.sendStrings(newSurname);  // Solo enviar el nuevo apellido si fue modificado
+            sendDataViaNetwork.sendStrings(newSurname);
         } else {
-            sendDataViaNetwork.sendStrings("");  // Enviar una cadena vacía si no se modificó
+            sendDataViaNetwork.sendStrings("");
         }
 
         if (newPhone != null) {
@@ -795,6 +830,11 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         System.out.println(response);  // Mostrar la respuesta del servidor
     }
 
+    /**
+     * GUI-based method to change patient data using JOptionPane.
+     * @return The response string from the server (success or error message).
+     * @throws IOException If a network error occurs.
+     */
     public String changePatientDataFromGUI(
             Patient patient,
             Socket socket,
@@ -802,6 +842,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             SendDataViaNetwork sendDataViaNetwork,
             java.awt.Component parent) throws IOException {
 
+        // 1. Show a selection dialog for the field to change
         String[] options = { "Name", "Surname", "Phone", "Email", "DNI", "Sex", "Insurance" };
         String choice = (String) JOptionPane.showInputDialog(
                 parent,
@@ -818,6 +859,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         String newName = null, newSurname = null, newEmail = null, newDni = null, newSex = null;
         Integer newPhone = null, newInsurance = null;
 
+        // 2. Read the new value based on the selected field
         switch (choice) {
             case "Name":
                 newName = JOptionPane.showInputDialog(parent, "Enter new name:");
@@ -859,10 +901,11 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 break;
         }
 
-        // opción 4 en el menú
+        // 3. Send operation code and patient ID
         sendDataViaNetwork.sendInt(4);
         sendDataViaNetwork.sendInt(patient.getId());
 
+        // 4. Send all fields: modified value or placeholder (empty string / -1)
         if (newName != null) sendDataViaNetwork.sendStrings(newName); else sendDataViaNetwork.sendStrings("");
         if (newSurname != null) sendDataViaNetwork.sendStrings(newSurname); else sendDataViaNetwork.sendStrings("");
         if (newPhone != null) sendDataViaNetwork.sendInt(newPhone); else sendDataViaNetwork.sendInt(-1);
@@ -871,15 +914,20 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         if (newSex != null) sendDataViaNetwork.sendStrings(newSex); else sendDataViaNetwork.sendStrings("");
         if (newInsurance != null) sendDataViaNetwork.sendInt(newInsurance); else sendDataViaNetwork.sendInt(-1);
 
+        // 5. Receive and return the server response
         String response = receiveDataViaNetwork.receiveString();
         return response;
     }
+    /**
+     * GUI-based method to record and send a signal, showing progress and options via JOptionPane.
+     */
     public void recordAndSendSignalGUI(Patient patient,
                                        Socket socket,
                                        SendDataViaNetwork sendData,
                                        ReceiveDataViaNetwork receiveData,
                                        Component parent) {
         try {
+            // 1. Select signal type (EMG/ECG) via dialog
             String[] options = { "Electromyography (EMG)", "Electrocardiogram (ECG)" };
             int typeOption = JOptionPane.showOptionDialog(
                     parent,
@@ -898,6 +946,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
             TypeSignal typeSignal = (typeOption == 0) ? TypeSignal.EMG : TypeSignal.ECG;
 
+            // 2. Enter duration in seconds
             String secondsStr = JOptionPane.showInputDialog(
                     parent,
                     "Enter duration in seconds (e.g., 10):",
@@ -923,6 +972,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
+            // 3. Enter optional BITalino MAC address
             String macAddress = JOptionPane.showInputDialog(
                     parent,
                     "Enter BITalino MAC address (e.g., 20:17:...) or leave empty for auto-search:",
@@ -937,6 +987,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 }
             }
 
+
             JOptionPane.showMessageDialog(
                     parent,
                     "Recording will start for " + seconds + " seconds.\nPlease perform the movement.",
@@ -944,7 +995,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                     JOptionPane.INFORMATION_MESSAGE
             );
 
-            // DIÁLOGO DE RECORDING (LÍNEA CORREGIDA AQUÍ)
+            // 4. Show recording progress dialog with Timer and JProgressBar
             JDialog recordingDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Recording in progress", false);
 
             JLabel statusLabel = new JLabel("Recording... " + seconds + " s remaining");
@@ -978,12 +1029,13 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 timer.start();
             });
 
-            // Adquisición de la señal (en el hilo donde llames a este método)
+            // 5. Acquire signal data using BitalinoService
             BitalinoService service = new BitalinoService(macAddress, 100);
             int patientId = patient.getId();
 
             Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
 
+            // 6. Close the progress dialog
             SwingUtilities.invokeLater(() -> {
                 timer.stop();
                 recordingDialog.dispose();
@@ -999,6 +1051,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
+            // 7. Send the acquired signal to the server
             JOptionPane.showMessageDialog(
                     parent,
                     "Signal acquired! Samples recorded: " + signal.getValues().size(),
