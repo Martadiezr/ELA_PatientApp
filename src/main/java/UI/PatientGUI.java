@@ -15,31 +15,44 @@ public class PatientGUI extends JFrame {
     private JPanel mainPanel;
 
     // Paneles
-    private JPanel connectPanel; // <--- Nuevo panel
+    private JPanel connectPanel;
     private JPanel authPanel;
     private JPanel menuPanel;
 
     // Componentes de connectPanel
     private JTextField ipField;
 
-    // Componentes de selectPatient (aunque ahora no los uses aquí)
-    private JTextArea patientListArea;
-    private JTextField patientIdField;
+    // Estado (currentPatientId ya no es necesario aquí si se usa PatientUI.getLoggedInPatient)
+    // private Integer currentPatientId = null;
 
-    // Estado
-    private Integer currentPatientId = null;
-
-    // Colores / estética
+    // ===== COLORES Y FUENTES DE AdminGUI =====
     private static final Color BG_COLOR = new Color(238, 244, 255);
     private static final Color CARD_COLOR = Color.WHITE;
     private static final Color BORDER_COLOR = new Color(210, 220, 240);
     private static final Color TEXT_DARK = new Color(30, 30, 30);
+    private static final Color BLUE_BUTTON = new Color(86, 132, 225); // Color principal de acción
+    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 26);
+    private static final Font SUBTITLE_FONT = new Font("SansSerif", Font.BOLD, 20);
+    private static final Font BUTTON_FONT = new Font("SansSerif", Font.PLAIN, 15);
+    // =========================================
+
 
     public PatientGUI() {
         super("Telemedicine - Patient");
 
+        // ===== Look&Feel Nimbus (Copiado de AdminGUI) =====
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception ignored) {}
+        // ===================================================
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 600);                 // Ventana principal más grande
+        setSize(900, 600);
         setMinimumSize(new Dimension(900, 600));
 
         cardLayout = new CardLayout();
@@ -47,7 +60,7 @@ public class PatientGUI extends JFrame {
         mainPanel.setBackground(BG_COLOR);
 
         // 1. Crear los paneles
-        connectPanel = createConnectPanel(); // <--- Creamos el panel de conexión
+        connectPanel = createConnectPanel();
         authPanel = createAuthPanel();
         menuPanel = createMenuPanel();
 
@@ -69,6 +82,42 @@ public class PatientGUI extends JFrame {
         SwingUtilities.invokeLater(PatientGUI::new);
     }
 
+    // ===== Helper UI (Copiado de AdminGUI) =====
+
+    /** Aplica estilo de tarjeta blanca con borde suave. */
+    private void styleCard(JPanel panel) {
+        panel.setBackground(CARD_COLOR);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+    }
+
+    /** Aplica estilo de botón de menú (claro, con borde). */
+    private void styleMenuButton(JButton button) {
+        button.setFont(BUTTON_FONT);
+        button.setFocusPainted(false);
+        button.setBackground(new Color(245, 248, 255)); // Fondo muy claro
+        button.setForeground(TEXT_DARK);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR),
+                BorderFactory.createEmptyBorder(8, 16, 8, 16)
+        ));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
+    /** Aplica estilo de botón principal (azul). */
+    private void stylePrimaryButton(JButton button) {
+        button.setBackground(BLUE_BUTTON);
+        button.setForeground(Color.WHITE);
+        button.setFont(BUTTON_FONT);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
     // ===================== PANTALLA 0: CONEXIÓN AL SERVIDOR =====================
 
     private JPanel createConnectPanel() {
@@ -77,30 +126,24 @@ public class PatientGUI extends JFrame {
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(CARD_COLOR);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        panel.setPreferredSize(new Dimension(380, 300)); // tarjeta más grande
+        styleCard(panel); // <--- Estilo de tarjeta aplicado
+        panel.setPreferredSize(new Dimension(380, 260)); // Reducido para ser similar a AdminGUI
 
         JLabel title = new JLabel("Welcome to Telemedicine");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Arial", Font.BOLD, 22));
-        title.setForeground(TEXT_DARK);
+        title.setFont(TITLE_FONT); // <--- Fuente de título aplicada
 
         JLabel ipLabel = new JLabel("Enter Server IP Address:");
+        ipLabel.setFont(new Font("SansSerif", Font.PLAIN, 14)); // Fuente simple
         ipLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Campo de texto con "localhost" por defecto
-        ipField = new JTextField("localhost");
-        ipField.setMaximumSize(new Dimension(250, 30));
+        ipField = new JTextField("localhost", 18);
+        ipField.setMaximumSize(new Dimension(260, 32)); // Tamaño fijo
         ipField.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton connectButton = new JButton("Connect");
-        connectButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        connectButton.setFocusPainted(false);
-        connectButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        stylePrimaryButton(connectButton); // <--- Estilo de botón principal aplicado
 
         connectButton.addActionListener(e -> attemptConnection());
 
@@ -108,7 +151,7 @@ public class PatientGUI extends JFrame {
         panel.add(title);
         panel.add(Box.createVerticalStrut(25));
         panel.add(ipLabel);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(8));
         panel.add(ipField);
         panel.add(Box.createVerticalStrut(20));
         panel.add(connectButton);
@@ -149,38 +192,25 @@ public class PatientGUI extends JFrame {
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(CARD_COLOR);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        panel.setPreferredSize(new Dimension(380, 300)); // tarjeta blanca más grande
+        styleCard(panel); // <--- Estilo de tarjeta aplicado
+        panel.setPreferredSize(new Dimension(380, 260)); // Reducido para ser similar a AdminGUI
 
         JLabel title = new JLabel("Patient Login");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Arial", Font.BOLD, 22));
-        title.setForeground(TEXT_DARK);
+        title.setFont(SUBTITLE_FONT); // <--- Fuente de subtítulo aplicada
 
         JButton loginButton = new JButton("Log in");
         JButton registerButton = new JButton("Register");
 
-        // Ambos con el mismo estilo neutro (no azul)
-        for (JButton b : new JButton[]{loginButton, registerButton}) {
-            b.setAlignmentX(Component.CENTER_ALIGNMENT);
-            b.setFocusPainted(false);
-            b.setBackground(new Color(245, 248, 255));
-            b.setForeground(TEXT_DARK);
-            b.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(BORDER_COLOR),
-                    BorderFactory.createEmptyBorder(8, 18, 8, 18)
-            ));
-            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
+        // Ambos con el mismo estilo de botón de menú
+        styleMenuButton(loginButton); // <--- Estilo de botón de menú aplicado
+        styleMenuButton(registerButton); // <--- Estilo de botón de menú aplicado
+
 
         loginButton.addActionListener(e -> showLoginForm());
         registerButton.addActionListener(e -> showRegisterForm());
 
-        panel.add(Box.createVerticalStrut(20));
+        panel.add(Box.createVerticalStrut(15));
         panel.add(title);
         panel.add(Box.createVerticalStrut(25));
         panel.add(loginButton);
@@ -217,14 +247,8 @@ public class PatientGUI extends JFrame {
         content.add(passwordField, gbc);
 
         JButton loginBtn = new JButton("Log in");
-        loginBtn.setFocusPainted(false);
-        loginBtn.setBackground(new Color(245, 248, 255));
-        loginBtn.setForeground(TEXT_DARK);
-        loginBtn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(6, 16, 6, 16)
-        ));
-        loginBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        stylePrimaryButton(loginBtn); // <--- Estilo de botón principal aplicado (cambiado de neutro a azul)
+        loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT); // Asegurar centrado
 
         gbc.gridx = 0; gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -261,7 +285,7 @@ public class PatientGUI extends JFrame {
         });
 
         dialog.getContentPane().add(content);
-        dialog.pack(); // cuadro más pequeño / fino
+        dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -343,14 +367,9 @@ public class PatientGUI extends JFrame {
         content.add(passwordField, gbc);
 
         JButton registerBtn = new JButton("Register");
-        registerBtn.setFocusPainted(false);
-        registerBtn.setBackground(new Color(245, 248, 255));
-        registerBtn.setForeground(TEXT_DARK);
-        registerBtn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(6, 16, 6, 16)
-        ));
-        registerBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        stylePrimaryButton(registerBtn); // <--- Estilo de botón principal aplicado (cambiado de neutro a azul)
+        registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT); // Asegurar centrado
+
 
         row++;
         gbc.gridx = 0; gbc.gridy = row;
@@ -360,12 +379,16 @@ public class PatientGUI extends JFrame {
 
         registerBtn.addActionListener(ev -> {
             try {
+                // Validación básica de campos no vacíos aquí sería recomendable.
+                // Los campos de números deben ser validados para evitar NumberFormatException.
+
                 boolean ok = context.getPatientUI().registerFromGUI(
                         nameField.getText(),
                         surnameField.getText(),
                         dniField.getText(),
                         dobField.getText(),
                         sexField.getText(),
+                        // Intenta parsear, maneja la excepción en el catch si es necesario
                         Integer.parseInt(phoneField.getText()),
                         Integer.parseInt(insuranceField.getText()),
                         emailField.getText(),
@@ -385,6 +408,11 @@ public class PatientGUI extends JFrame {
                             "Error",
                             JOptionPane.ERROR_MESSAGE);
                 }
+            } catch (NumberFormatException nfe) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Please check the Phone or Insurance fields (must be numbers).",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(dialog,
                         "Connection error: " + ex.getMessage(),
@@ -394,7 +422,7 @@ public class PatientGUI extends JFrame {
         });
 
         dialog.getContentPane().add(content);
-        dialog.pack(); // más fino y compacto
+        dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -408,16 +436,12 @@ public class PatientGUI extends JFrame {
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(CARD_COLOR);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
+        styleCard(panel); // <--- Estilo de tarjeta aplicado
         panel.setPreferredSize(new Dimension(380, 320));
 
         JLabel title = new JLabel("Patient Menu");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Arial", Font.BOLD, 18));
+        title.setFont(SUBTITLE_FONT); // <--- Fuente de subtítulo aplicada
         title.setForeground(TEXT_DARK);
 
         JButton insertMedicalInfoButton = new JButton("Insert medical info");
@@ -425,17 +449,11 @@ public class PatientGUI extends JFrame {
         JButton seeFeedbackButton = new JButton("See feedback");
         JButton modifyDataButton = new JButton("Change patient data");
 
-        for (JButton b : new JButton[]{insertMedicalInfoButton, signalButton, seeFeedbackButton, modifyDataButton}) {
-            b.setAlignmentX(Component.CENTER_ALIGNMENT);
-            b.setFocusPainted(false);
-            b.setBackground(new Color(245, 248, 255));
-            b.setForeground(TEXT_DARK);
-            b.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(BORDER_COLOR),
-                    BorderFactory.createEmptyBorder(8, 18, 8, 18)
-            ));
-            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
+        // Aplicamos el estilo de menú a todos los botones
+        styleMenuButton(insertMedicalInfoButton);
+        styleMenuButton(signalButton);
+        styleMenuButton(seeFeedbackButton);
+        styleMenuButton(modifyDataButton);
 
         insertMedicalInfoButton.addActionListener(e -> oninsertMedicalInfoButton());
         signalButton.addActionListener(e -> onsignalButton());
