@@ -527,9 +527,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
     }
 
 
-    /**
-     * Console-based method to record and send a signal using BITalino service.
-     */
     public void recordAndSendSignal(Patient patient, Socket socket, SendDataViaNetwork sendData, ReceiveDataViaNetwork receiveData) {
         try {
             System.out.println("--- RECORD NEW SIGNAL ---");
@@ -556,22 +553,55 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 macAddress = null;
             }
 
-            // Instanciamos el servicio
-            BitalinoService service = new BitalinoService( macAddress, 100);
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                System.out.println("WINDOWS");
+                // 5. Acquire signal data using BitalinoService
+                BitalinoServiceWindows service = new BitalinoServiceWindows(macAddress, 100);
+                int patientId = patient.getId();
 
-            System.out.println("Starting acquisition... Please wait.");
-            // Usamos el ID del paciente si está disponible
-            int patientId = (patient != null) ? patient.getId() : 0;
+                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
 
-            Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
 
-            System.out.println("Signal acquired! Samples recorded: " + signal.getValues().size());
-            System.out.println("Sending to server...");
+                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                    System.out.println("ERROR sending signal");
+                    return;
+                }else{
+                    System.out.println("Signal acquired! Samples recorded: " + signal.getValues().size());
+                    System.out.println("Sending to server...");
+                    sendData.sendInt(2);
+                    sendData.sendSignal(signal);
+                    System.out.println("Signal sent successfully!");
+                }
 
-            sendData.sendInt(2); // Opción 2: Enviar señal
-            sendData.sendSignal(signal);
 
-            System.out.println("Signal sent successfully!");
+
+
+            }else if(os.contains("mac") || os.contains("nix") || os.contains("nux")) {
+                System.out.println("MAC/LINUX");
+                // 5. Acquire signal data using BitalinoService
+                BitalinoService service = new BitalinoService(macAddress, 100);
+                int patientId = patient.getId();
+
+                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
+
+
+                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                    System.out.println("ERROR sending signal");
+                    return;
+                }else{
+                    System.out.println("Signal acquired! Samples recorded: " + signal.getValues().size());
+                    System.out.println("Sending to server...");
+                    sendData.sendInt(2);
+                    sendData.sendSignal(signal);
+                    System.out.println("Signal sent successfully!");
+                }
+
+
+
+
+            }
+
 
         } catch (Throwable e) {
             System.err.println("Error capturing/sending signal: " + e.getMessage());
@@ -1029,45 +1059,98 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 timer.start();
             });
 
-            // 5. Acquire signal data using BitalinoService
-            BitalinoService service = new BitalinoService(macAddress, 100);
-            int patientId = patient.getId();
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                System.out.println("WINDOWS");
+                // 5. Acquire signal data using BitalinoService
+                BitalinoServiceWindows service = new BitalinoServiceWindows(macAddress, 100);
+                int patientId = patient.getId();
 
-            Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
+                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
 
-            // 6. Close the progress dialog
-            SwingUtilities.invokeLater(() -> {
-                timer.stop();
-                recordingDialog.dispose();
-            });
+                // 6. Close the progress dialog
+                SwingUtilities.invokeLater(() -> {
+                    timer.stop();
+                    recordingDialog.dispose();
+                });
 
-            if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                            parent,
+                            "No signal was recorded.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                // 7. Send the acquired signal to the server
                 JOptionPane.showMessageDialog(
                         parent,
-                        "No signal was recorded.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
+                        "Signal acquired! Samples recorded: " + signal.getValues().size(),
+                        "Signal acquired",
+                        JOptionPane.INFORMATION_MESSAGE
                 );
-                return;
+
+                sendData.sendInt(2);
+                sendData.sendSignal(signal);
+
+                JOptionPane.showMessageDialog(
+                        parent,
+                        "Signal sent to server successfully.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+
+
+            }else if(os.contains("mac") || os.contains("nix") || os.contains("nux")) {
+                System.out.println("MAC/LINUX");
+                // 5. Acquire signal data using BitalinoService
+                BitalinoService service = new BitalinoService(macAddress, 100);
+                int patientId = patient.getId();
+
+                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
+
+                // 6. Close the progress dialog
+                SwingUtilities.invokeLater(() -> {
+                    timer.stop();
+                    recordingDialog.dispose();
+                });
+
+                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                            parent,
+                            "No signal was recorded.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                // 7. Send the acquired signal to the server
+                JOptionPane.showMessageDialog(
+                        parent,
+                        "Signal acquired! Samples recorded: " + signal.getValues().size(),
+                        "Signal acquired",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                sendData.sendInt(2);
+                sendData.sendSignal(signal);
+
+                JOptionPane.showMessageDialog(
+                        parent,
+                        "Signal sent to server successfully.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+
             }
 
-            // 7. Send the acquired signal to the server
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Signal acquired! Samples recorded: " + signal.getValues().size(),
-                    "Signal acquired",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
 
-            sendData.sendInt(2);
-            sendData.sendSignal(signal);
 
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Signal sent to server successfully.",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
 
         } catch (Throwable e) {
             e.printStackTrace();
@@ -1079,7 +1162,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             );
         }
     }
-
 }
 
 
