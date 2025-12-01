@@ -39,7 +39,7 @@ public class PatientApp {
         }
     }
 
-    // Menú principal del paciente
+    //Menú principal del paciente
     public static void showPatientMenu(Socket socket, SendDataViaNetwork sendDataViaNetwork, ReceiveDataViaNetwork receiveDataViaNetwork) {
         boolean running = true;
         Scanner scanner = new Scanner(System.in);
