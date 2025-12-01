@@ -63,4 +63,3 @@ public class DeviceDiscovererWindows implements DiscoveryListener {
 
     public void serviceSearchCompleted(int transID, int respCode) {}
 }
-
