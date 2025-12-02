@@ -873,7 +873,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
             java.awt.Component parent) throws IOException {
 
         // 1. Show a selection dialog for the field to change
-        String[] options = { "Name", "Surname", "Phone", "Email", "DNI", "Sex", "Insurance" };
+        String[] options = { "Name", "Surname", "Phone", "DNI", "Sex", "Insurance" };
         String choice = (String) JOptionPane.showInputDialog(
                 parent,
                 "What information would you like to change?",
@@ -886,7 +886,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
 
         if (choice == null) return "Operation cancelled";
 
-        String newName = null, newSurname = null, newEmail = null, newDni = null, newSex = null;
+        String newName = null, newSurname = null, newDni = null, newSex = null;
         Integer newPhone = null, newInsurance = null;
 
         // 2. Read the new value based on the selected field
@@ -907,10 +907,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 } catch (NumberFormatException e) {
                     return "Invalid phone number.";
                 }
-                break;
-            case "Email":
-                newEmail = JOptionPane.showInputDialog(parent, "Enter new email:");
-                if (newEmail == null) return "Operation cancelled";
                 break;
             case "DNI":
                 newDni = JOptionPane.showInputDialog(parent, "Enter new DNI:");
@@ -939,7 +935,6 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         if (newName != null) sendDataViaNetwork.sendStrings(newName); else sendDataViaNetwork.sendStrings("");
         if (newSurname != null) sendDataViaNetwork.sendStrings(newSurname); else sendDataViaNetwork.sendStrings("");
         if (newPhone != null) sendDataViaNetwork.sendInt(newPhone); else sendDataViaNetwork.sendInt(-1);
-        if (newEmail != null) sendDataViaNetwork.sendStrings(newEmail); else sendDataViaNetwork.sendStrings("");
         if (newDni != null) sendDataViaNetwork.sendStrings(newDni); else sendDataViaNetwork.sendStrings("");
         if (newSex != null) sendDataViaNetwork.sendStrings(newSex); else sendDataViaNetwork.sendStrings("");
         if (newInsurance != null) sendDataViaNetwork.sendInt(newInsurance); else sendDataViaNetwork.sendInt(-1);
@@ -948,6 +943,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
         String response = receiveDataViaNetwork.receiveString();
         return response;
     }
+
     /**
      * GUI-based method to record and send a signal, showing progress and options via JOptionPane.
      */
@@ -970,13 +966,11 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                     options[0]
             );
 
-            if (typeOption < 0) {
-                return;
-            }
+            if (typeOption < 0) return;
 
             TypeSignal typeSignal = (typeOption == 0) ? TypeSignal.EMG : TypeSignal.ECG;
 
-            // 2. Enter duration in seconds
+            // 2. Enter duration
             String secondsStr = JOptionPane.showInputDialog(
                     parent,
                     "Enter duration in seconds (e.g., 10):",
@@ -984,50 +978,33 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                     JOptionPane.QUESTION_MESSAGE
             );
 
-            if (secondsStr == null || secondsStr.trim().isEmpty()) {
-                return;
-            }
+            if (secondsStr == null || secondsStr.trim().isEmpty()) return;
 
             int seconds;
             try {
                 seconds = Integer.parseInt(secondsStr.trim());
                 if (seconds <= 0) throw new NumberFormatException();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(
-                        parent,
-                        "Invalid duration. Please enter a positive integer.",
-                        "Input error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                JOptionPane.showMessageDialog(parent, "Invalid duration.", "Input error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // 3. Enter optional BITalino MAC address
+            // 3. Enter optional BITalino MAC
             String macAddress = JOptionPane.showInputDialog(
                     parent,
-                    "Enter BITalino MAC address (e.g., 20:17:...) or leave empty for auto-search:",
+                    "Enter BITalino MAC address (or leave empty):",
                     "BITalino MAC",
                     JOptionPane.QUESTION_MESSAGE
             );
-
             if (macAddress != null) {
                 macAddress = macAddress.trim();
-                if (macAddress.isEmpty()) {
-                    macAddress = null;
-                }
+                if (macAddress.isEmpty()) macAddress = null;
             }
 
+            JOptionPane.showMessageDialog(parent, "Recording will start for " + seconds + " seconds.", "Recording", JOptionPane.INFORMATION_MESSAGE);
 
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Recording will start for " + seconds + " seconds.\nPlease perform the movement.",
-                    "Recording",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
-            // 4. Show recording progress dialog with Timer and JProgressBar
-            JDialog recordingDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Recording in progress", false);
-
+            // 4. Show recording progress dialog
+            JDialog recordingDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Recording...", false);
             JLabel statusLabel = new JLabel("Recording... " + seconds + " s remaining");
             JProgressBar progressBar = new JProgressBar(0, seconds);
             progressBar.setValue(0);
@@ -1049,9 +1026,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 if (remaining < 0) remaining = 0;
                 statusLabel.setText("Recording... " + remaining + " s remaining");
                 progressBar.setValue(elapsed[0]);
-                if (elapsed[0] >= seconds) {
-                    ((javax.swing.Timer) e.getSource()).stop();
-                }
+                if (elapsed[0] >= seconds) ((javax.swing.Timer) e.getSource()).stop();
             });
 
             SwingUtilities.invokeLater(() -> {
@@ -1059,107 +1034,58 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 timer.start();
             });
 
+            // 5. Acquire signal
+            Signal signal = null;
             String os = System.getProperty("os.name").toLowerCase();
-            if (os.contains("win")) {
-                System.out.println("WINDOWS");
-                // 5. Acquire signal data using BitalinoService
-                BitalinoServiceWindows service = new BitalinoServiceWindows(macAddress, 100);
-                int patientId = patient.getId();
 
-                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
-
-                // 6. Close the progress dialog
+            try {
+                if (os.contains("win")) {
+                    BitalinoServiceWindows service = new BitalinoServiceWindows(macAddress, 100);
+                    signal = service.acquireSignal(typeSignal, patient.getId(), seconds);
+                } else {
+                    BitalinoService service = new BitalinoService(macAddress, 100);
+                    signal = service.acquireSignal(typeSignal, patient.getId(), seconds);
+                }
+            } catch (Exception ex) {
+                // Si falla bitalino, cerramos dialogo
                 SwingUtilities.invokeLater(() -> {
                     timer.stop();
                     recordingDialog.dispose();
                 });
-
-                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
-                    JOptionPane.showMessageDialog(
-                            parent,
-                            "No signal was recorded.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-
-                // 7. Send the acquired signal to the server
-                JOptionPane.showMessageDialog(
-                        parent,
-                        "Signal acquired! Samples recorded: " + signal.getValues().size(),
-                        "Signal acquired",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-                sendData.sendInt(2);
-                sendData.sendSignal(signal);
-
-                JOptionPane.showMessageDialog(
-                        parent,
-                        "Signal sent to server successfully.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-
-
-            }else if(os.contains("mac") || os.contains("nix") || os.contains("nux")) {
-                System.out.println("MAC/LINUX");
-                // 5. Acquire signal data using BitalinoService
-                BitalinoService service = new BitalinoService(macAddress, 100);
-                int patientId = patient.getId();
-
-                Signal signal = service.acquireSignal(typeSignal, patientId, seconds);
-
-                // 6. Close the progress dialog
-                SwingUtilities.invokeLater(() -> {
-                    timer.stop();
-                    recordingDialog.dispose();
-                });
-
-                if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
-                    JOptionPane.showMessageDialog(
-                            parent,
-                            "No signal was recorded.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-
-                // 7. Send the acquired signal to the server
-                JOptionPane.showMessageDialog(
-                        parent,
-                        "Signal acquired! Samples recorded: " + signal.getValues().size(),
-                        "Signal acquired",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-                sendData.sendInt(2);
-                sendData.sendSignal(signal);
-
-                JOptionPane.showMessageDialog(
-                        parent,
-                        "Signal sent to server successfully.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-
+                throw ex;
             }
 
+            // 6. Close dialog
+            SwingUtilities.invokeLater(() -> {
+                timer.stop();
+                recordingDialog.dispose();
+            });
 
+            if (signal == null || signal.getValues() == null || signal.getValues().isEmpty()) {
+                JOptionPane.showMessageDialog(parent, "No signal was recorded.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
+            // 7. SEND SIGNAL TO SERVER
+            // Enviamos OpCode (2) y la señal
+            sendData.sendInt(2);
+            sendData.sendSignal(signal);
+
+            // === CAMBIO IMPORTANTE AQUI ===
+            // Debemos ESPERAR la confirmación del servidor ("OK")
+            // Si no leemos esto, el socket se queda desincronizado para la siguiente acción.
+            String response = receiveData.receiveString();
+
+            if ("OK".equals(response)) {
+                JOptionPane.showMessageDialog(parent, "Signal sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(parent, "Server error saving signal.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            // ==============================
 
         } catch (Throwable e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Error capturing/sending signal: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(parent, "Error capturing/sending signal: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

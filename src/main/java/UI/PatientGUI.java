@@ -247,8 +247,8 @@ public class PatientGUI extends JFrame {
         content.add(passwordField, gbc);
 
         JButton loginBtn = new JButton("Log in");
-        stylePrimaryButton(loginBtn); // <--- Estilo de botón principal aplicado (cambiado de neutro a azul)
-        loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT); // Asegurar centrado
+        stylePrimaryButton(loginBtn);
+        loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         gbc.gridx = 0; gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -258,30 +258,50 @@ public class PatientGUI extends JFrame {
         loginBtn.addActionListener(ev -> {
             String email = emailField.getText();
             String password = new String(passwordField.getPassword());
-            try {
-                boolean ok = context.getPatientUI().logInFromGUI(
-                        email,
-                        password,
-                        context.getSocket(),
-                        context.getSendData(),
-                        context.getReceiveData()
-                );
-                if (ok) {
-                    JOptionPane.showMessageDialog(dialog, "Log in successful");
-                    dialog.dispose();
-                    cardLayout.show(mainPanel, "MENU");
-                } else {
-                    JOptionPane.showMessageDialog(dialog,
-                            "Incorrect user or password",
-                            "Login error",
-                            JOptionPane.ERROR_MESSAGE);
+
+            // 1. Desactivar botón para indicar carga y evitar clics repetidos
+            loginBtn.setEnabled(false);
+            loginBtn.setText("Connecting...");
+
+            // 2. Crear un Hilo nuevo para la operación de red
+            new Thread(() -> {
+                try {
+                    boolean ok = context.getPatientUI().logInFromGUI(
+                            email,
+                            password,
+                            context.getSocket(),
+                            context.getSendData(),
+                            context.getReceiveData()
+                    );
+
+                    // 3. Volver al hilo de la interfaz (Swing) para mostrar resultados
+                    SwingUtilities.invokeLater(() -> {
+                        loginBtn.setEnabled(true);
+                        loginBtn.setText("Log in");
+
+                        if (ok) {
+                            JOptionPane.showMessageDialog(dialog, "Log in successful");
+                            dialog.dispose();
+                            cardLayout.show(mainPanel, "MENU");
+                        } else {
+                            JOptionPane.showMessageDialog(dialog,
+                                    "Incorrect user or password",
+                                    "Login error",
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+
+                } catch (IOException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        loginBtn.setEnabled(true);
+                        loginBtn.setText("Log in");
+                        JOptionPane.showMessageDialog(dialog,
+                                "Connection error: " + ex.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    });
                 }
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(dialog,
-                        "Connection error: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            }).start(); // <--- IMPORTANTE: Iniciar el hilo
         });
 
         dialog.getContentPane().add(content);
@@ -302,10 +322,11 @@ public class PatientGUI extends JFrame {
         gbc.insets = new Insets(3, 8, 3, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // --- Definición de campos (igual que antes) ---
         JTextField nameField = new JTextField(15);
         JTextField surnameField = new JTextField(15);
         JTextField dniField = new JTextField(15);
-        JTextField dobField = new JTextField(15);  // YYYY-MM-DD
+        JTextField dobField = new JTextField(15);
         JTextField sexField = new JTextField(5);
         JTextField phoneField = new JTextField(10);
         JTextField insuranceField = new JTextField(10);
@@ -313,63 +334,19 @@ public class PatientGUI extends JFrame {
         JPasswordField passwordField = new JPasswordField(18);
 
         int row = 0;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        content.add(nameField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Surname:"), gbc);
-        gbc.gridx = 1;
-        content.add(surnameField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("DNI:"), gbc);
-        gbc.gridx = 1;
-        content.add(dniField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Birth date (YYYY-MM-DD):"), gbc);
-        gbc.gridx = 1;
-        content.add(dobField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Sex (M/F):"), gbc);
-        gbc.gridx = 1;
-        content.add(sexField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Phone:"), gbc);
-        gbc.gridx = 1;
-        content.add(phoneField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Insurance:"), gbc);
-        gbc.gridx = 1;
-        content.add(insuranceField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1;
-        content.add(emailField, gbc);
-
-        row++;
-        gbc.gridx = 0; gbc.gridy = row;
-        content.add(new JLabel("Password:"), gbc);
-        gbc.gridx = 1;
-        content.add(passwordField, gbc);
+        gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Name:"), gbc); gbc.gridx = 1; content.add(nameField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Surname:"), gbc); gbc.gridx = 1; content.add(surnameField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("DNI:"), gbc); gbc.gridx = 1; content.add(dniField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Birth date:"), gbc); gbc.gridx = 1; content.add(dobField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Sex (M/F):"), gbc); gbc.gridx = 1; content.add(sexField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Phone:"), gbc); gbc.gridx = 1; content.add(phoneField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Insurance:"), gbc); gbc.gridx = 1; content.add(insuranceField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Email:"), gbc); gbc.gridx = 1; content.add(emailField, gbc);
+        row++; gbc.gridx = 0; gbc.gridy = row; content.add(new JLabel("Password:"), gbc); gbc.gridx = 1; content.add(passwordField, gbc);
 
         JButton registerBtn = new JButton("Register");
-        stylePrimaryButton(registerBtn); // <--- Estilo de botón principal aplicado (cambiado de neutro a azul)
-        registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT); // Asegurar centrado
-
+        stylePrimaryButton(registerBtn);
+        registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         row++;
         gbc.gridx = 0; gbc.gridy = row;
@@ -377,48 +354,83 @@ public class PatientGUI extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER;
         content.add(registerBtn, gbc);
 
+        // --- LÓGICA DEL BOTÓN MODIFICADA ---
         registerBtn.addActionListener(ev -> {
-            try {
-                // Validación básica de campos no vacíos aquí sería recomendable.
-                // Los campos de números deben ser validados para evitar NumberFormatException.
+            String name = nameField.getText();
+            String surname = surnameField.getText();
+            String dni = dniField.getText();
+            String dob = dobField.getText();
+            String sex = sexField.getText();
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
+            String phoneStr = phoneField.getText();
+            String insuranceStr = insuranceField.getText();
 
-                boolean ok = context.getPatientUI().registerFromGUI(
-                        nameField.getText(),
-                        surnameField.getText(),
-                        dniField.getText(),
-                        dobField.getText(),
-                        sexField.getText(),
-                        // Intenta parsear, maneja la excepción en el catch si es necesario
-                        Integer.parseInt(phoneField.getText()),
-                        Integer.parseInt(insuranceField.getText()),
-                        emailField.getText(),
-                        new String(passwordField.getPassword()),
-                        context.getSocket(),
-                        context.getSendData(),
-                        context.getReceiveData()
-                );
-                if (ok) {
-                    JOptionPane.showMessageDialog(dialog, "Patient registered successfully");
-                    dialog.dispose();
-                    cardLayout.show(mainPanel, "MENU");
+            // Bloquear botón visualmente
+            registerBtn.setEnabled(false);
+            registerBtn.setText("Registering...");
 
-                } else {
-                    JOptionPane.showMessageDialog(dialog,
-                            "Registration failed",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
+            new Thread(() -> {
+                try {
+                    int phone = Integer.parseInt(phoneStr);
+                    int insurance = Integer.parseInt(insuranceStr);
+
+                    boolean ok = context.getPatientUI().registerFromGUI(
+                            name, surname, dni, dob, sex, phone, insurance, email, password,
+                            context.getSocket(), context.getSendData(), context.getReceiveData()
+                    );
+
+                    SwingUtilities.invokeLater(() -> {
+                        registerBtn.setEnabled(true);
+                        registerBtn.setText("Register");
+
+                        if (ok) {
+                            JOptionPane.showMessageDialog(dialog, "Registered successfully. Logging in...");
+                            dialog.dispose(); // Cierra ventana de registro
+
+                            // === CORRECCIÓN CRÍTICA: RECONEXIÓN ===
+                            try {
+                                // 1. Cerramos el socket antiguo porque el servidor quizás dejó de escuchar
+                                context.getSocket().close();
+
+                                // 2. Recuperamos la IP que usó el usuario al principio
+                                String ip = ipField.getText().trim();
+                                if(ip.isEmpty()) ip = "localhost";
+
+                                // 3. Creamos una conexión NUEVA y LIMPIA
+                                context = new PatientClientContext(ip, 8888);
+
+                                // 4. Ahora sí mostramos el Login con la conexión nueva
+                                showLoginForm();
+
+                            } catch (IOException e) {
+                                JOptionPane.showMessageDialog(mainPanel,
+                                        "Registration successful, but failed to reconnect for login.\n" + e.getMessage(),
+                                        "Connection Error", JOptionPane.ERROR_MESSAGE);
+                                // Si falla reconectar, volvemos a la pantalla de Auth
+                                cardLayout.show(mainPanel, "AUTH");
+                            }
+                            // ======================================
+
+                        } else {
+                            JOptionPane.showMessageDialog(dialog, "Registration failed", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+
+                } catch (NumberFormatException nfe) {
+                    SwingUtilities.invokeLater(() -> {
+                        registerBtn.setEnabled(true);
+                        registerBtn.setText("Register");
+                        JOptionPane.showMessageDialog(dialog, "Check Phone/Insurance fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    });
+                } catch (IOException ex) {
+                    SwingUtilities.invokeLater(() -> {
+                        registerBtn.setEnabled(true);
+                        registerBtn.setText("Register");
+                        JOptionPane.showMessageDialog(dialog, "Connection error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    });
                 }
-            } catch (NumberFormatException nfe) {
-                JOptionPane.showMessageDialog(dialog,
-                        "Please check the Phone or Insurance fields (must be numbers).",
-                        "Input Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(dialog,
-                        "Connection error: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            }).start();
         });
 
         dialog.getContentPane().add(content);
@@ -509,10 +521,7 @@ public class PatientGUI extends JFrame {
 
     private void onsignalButton() {
         if (context == null) {
-            JOptionPane.showMessageDialog(this,
-                    "You are not connected to the server.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "You are not connected to the server.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -520,13 +529,11 @@ public class PatientGUI extends JFrame {
         Patient loggedInPatient = patientUI.getLoggedInPatient();
 
         if (loggedInPatient == null) {
-            JOptionPane.showMessageDialog(this,
-                    "You must log in first.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "You must log in first.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // Ejecutamos en un hilo aparte para que la grabación no congele la ventana visualmente
         new Thread(() -> {
             patientUI.recordAndSendSignalGUI(
                     loggedInPatient,
@@ -535,6 +542,8 @@ public class PatientGUI extends JFrame {
                     context.getReceiveData(),
                     PatientGUI.this
             );
+            // ¡YA NO HACEMOS RECONEXIÓN AQUÍ!
+            // Como hemos arreglado PatientUI para leer el "OK", la conexión sigue sincronizada.
         }).start();
     }
 
