@@ -398,11 +398,9 @@ public class PatientGUI extends JFrame {
                         context.getReceiveData()
                 );
                 if (ok) {
-                    JOptionPane.showMessageDialog(dialog,
-                            "Patient registered successfully.\nNow you can log in with your credentials.");
+                    JOptionPane.showMessageDialog(dialog, "Patient registered successfully");
                     dialog.dispose();
-                    // Volver a la pantalla de LOGIN / REGISTER
-                    cardLayout.show(mainPanel, "AUTH");
+                    cardLayout.show(mainPanel, "MENU");
 
                 } else {
                     JOptionPane.showMessageDialog(dialog,
@@ -591,14 +589,6 @@ public class PatientGUI extends JFrame {
 
         PatientUI patientUI = context.getPatientUI();
         Patient loggedInPatient = patientUI.getLoggedInPatient();
-
-        if (loggedInPatient == null) {
-            JOptionPane.showMessageDialog(this,
-                    "You must log in first.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
 
 
         try {
