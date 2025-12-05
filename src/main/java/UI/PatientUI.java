@@ -1066,7 +1066,7 @@ public void seeDoctorFeedback(Patient patient, Socket socket, SendDataViaNetwork
                 return;
             }
 
-            // 7. SEND SIGNAL TO SERVER
+            // 7. SEND SIGNAL TO SERVER.
             // Enviamos OpCode (2) y la señal
             sendData.sendInt(2);
             sendData.sendSignal(signal);
